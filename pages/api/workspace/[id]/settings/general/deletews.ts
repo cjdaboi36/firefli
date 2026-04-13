@@ -112,16 +112,17 @@ export async function handler(
 				},
 			},
 		});
-		await prisma.quota.deleteMany({ where: { workspaceGroupId: workspaceId } });
-		await prisma.role.deleteMany({ where: { workspaceGroupId: workspaceId } });
-		await prisma.departmentMember.deleteMany({
+		await prisma.quotaDepartment.deleteMany({
 			where: {
 				department: {
 					workspaceGroupId: workspaceId,
 				},
 			},
 		});
-		await prisma.quotaDepartment.deleteMany({
+		await prisma.userQuotaCompletion.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.quota.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.role.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.departmentMember.deleteMany({
 			where: {
 				department: {
 					workspaceGroupId: workspaceId,
@@ -146,6 +147,15 @@ export async function handler(
 		await prisma.workspaceExternalServices.deleteMany({ where: { workspaceGroupId: workspaceId } });
 		await prisma.config.deleteMany({ where: { workspaceGroupId: workspaceId } });
 		await prisma.auditLog.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.stickyAnnouncement.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.sessionRoleTemplate.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.sessionRoleCategory.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.gameServer.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.remoteCommand.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.playerBan.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.playerReport.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.adminMessageLog.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.recommendation.deleteMany({ where: { workspaceGroupId: workspaceId } });
 		await prisma.workspaceMember.deleteMany({ where: { workspaceGroupId: workspaceId } });
 		await prisma.workspace.delete({
 			where: { groupId: workspaceId },
