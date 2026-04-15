@@ -59,7 +59,7 @@ export async function handler(
 	const userHasDepartmentAccess = document.departments.some(dept =>
 		dept.departmentMembers.some(dm => 
 			dm.userId.toString() === req.session.userid.toString() &&
-			dm.workspaceGroupId === parseInt(id as string)
+			dm.workspaceGroupId === BigInt(parseInt(id as string))
 		)
 	);
 	const noRestrictions = document.roles.length === 0 && document.departments.length === 0;

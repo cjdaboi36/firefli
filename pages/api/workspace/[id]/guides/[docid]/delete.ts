@@ -21,7 +21,7 @@ export async function handler(
 	if (!req.query.docid) return res.status(400).json({ success: false, error: 'Document ID not provided' });
 	const workspaceId = parseInt(req.query.id as string);
 	const doc = await prisma.document.findUnique({ where: { id: req.query.docid as string } });
-	if (!doc || doc.workspaceGroupId !== workspaceId) return res.status(404).json({ success: false, error: 'Document not found in this workspace' });
+	if (!doc || Number(doc.workspaceGroupId) !== workspaceId) return res.status(404).json({ success: false, error: 'Document not found in this workspace' });
 	await prisma.document.delete({ where: { id: req.query.docid as string } });
 
 	try {

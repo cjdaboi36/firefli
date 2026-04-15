@@ -54,7 +54,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           departments: { select: { id: true, name: true } }
         },
       });
-      if (!documentBefore || documentBefore.workspaceGroupId !== workspaceId) {
+      if (!documentBefore || Number(documentBefore.workspaceGroupId) !== workspaceId) {
         return res.status(404).json({
           success: false,
           error: "Document not found in this workspace",

@@ -42,7 +42,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       where: { id: quotaId },
     });
 
-    if (!quota || quota.workspaceGroupId !== workspaceId) {
+    if (!quota || quota.workspaceGroupId !== BigInt(workspaceId)) {
       return res.status(404).json({ success: false, error: "Quota not found" });
     }
     const completion = await (prisma as any).userQuotaCompletion.findUnique({

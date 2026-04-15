@@ -1,5 +1,9 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    (BigInt.prototype as any).toJSON = function () {
+      return this.toString();
+    };
+
     const { closeActiveSessions } = await import('./utils/closesessions');
     await closeActiveSessions();
     

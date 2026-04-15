@@ -61,7 +61,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         .json({ success: false, error: "Session not found" });
     }
 
-    if (session.sessionType.workspace.groupId !== workspaceId) {
+    if (session.sessionType.workspace.groupId !== BigInt(workspaceId)) {
       return res.status(403).json({
         success: false,
         error: "Session does not belong to this workspace",

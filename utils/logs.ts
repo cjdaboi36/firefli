@@ -5,7 +5,7 @@ import { getUsername } from './userinfoEngine';
 
 export type AuditDetails = Record<string, any>;
 
-async function sendToDiscord(workspaceGroupId: number, userId: number | null, action: string, details?: AuditDetails) {
+async function sendToDiscord(workspaceGroupId: bigint | number, userId: number | null, action: string, details?: AuditDetails) {
   try {
     const integration = await prisma.discordIntegration.findUnique({
       where: { workspaceGroupId },
@@ -100,7 +100,7 @@ async function sendToDiscord(workspaceGroupId: number, userId: number | null, ac
   }
 }
 
-export async function logAudit(workspaceGroupId: number, userId: number | null, action: string, entity?: string, details?: AuditDetails) {
+export async function logAudit(workspaceGroupId: bigint | number, userId: number | null, action: string, entity?: string, details?: AuditDetails) {
   try {
     const p: any = prisma as any;
     if (p && p.auditLog) {
@@ -143,7 +143,7 @@ export async function logAudit(workspaceGroupId: number, userId: number | null, 
   }
 }
 
-export async function queryAudit(workspaceGroupId: number, opts: { userId?: number; action?: string; search?: string; skip?: number; take?: number } = {}) {
+export async function queryAudit(workspaceGroupId: bigint | number, opts: { userId?: number; action?: string; search?: string; skip?: number; take?: number } = {}) {
   const where: any = { workspaceGroupId };
   if (opts.userId) where.userId = BigInt(opts.userId);
   if (opts.action) where.action = opts.action;

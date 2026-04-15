@@ -48,7 +48,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       },
     });
 
-    if (!quota || quota.workspaceGroupId !== workspaceId) {
+    if (!quota || quota.workspaceGroupId !== BigInt(workspaceId)) {
       return res.status(404).json({ success: false, error: "Quota not found" });
     }
 

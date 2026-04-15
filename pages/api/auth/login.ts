@@ -295,7 +295,7 @@ export async function handler(
       try {
         // Use cached function to minimize API calls
         const groupPromises = user.roles.map(async (role) => {
-          const { logo, group } = await getCachedGroupInfo(role.workspaceGroupId);
+          const { logo, group } = await getCachedGroupInfo(Number(role.workspaceGroupId));
           return {
             groupId: role.workspaceGroupId,
             groupThumbnail: logo,

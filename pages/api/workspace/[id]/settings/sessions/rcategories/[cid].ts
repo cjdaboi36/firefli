@@ -19,7 +19,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     where: { id: categoryId },
   });
 
-  if (!existing || existing.workspaceGroupId !== workspaceGroupId) {
+  if (!existing || existing.workspaceGroupId !== BigInt(workspaceGroupId)) {
     return res.status(404).json({ success: false, error: "Category not found" });
   }
 

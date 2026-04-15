@@ -242,5 +242,5 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
   return res
     .status(200)
-    .json({ success: true, workspaceGroupId: workspace.groupId });
+    .json({ success: true, workspaceGroupId: Number(workspace.groupId) });
 }

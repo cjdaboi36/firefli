@@ -43,7 +43,7 @@ export default async function handler(
         return res
           .status(400)
           .json({ success: false, error: "Invalid workspace ID" });
-      checkGroupRoles(workspaceId).catch((e) =>
+      checkGroupRoles(BigInt(workspaceId)).catch((e) =>
         console.error("checkgrouproles cron error:", e),
       );
       return res
@@ -75,7 +75,7 @@ export default async function handler(
       const MAX_CONSECUTIVE_CONNECTION_FAILURES = 2;
       for (let i = 0; i < ws.length; i++) {
         const w = ws[i];
-        ids.push(w.groupId);
+        ids.push(Number(w.groupId));
         console.log(
           `[cron-update-roles] [Batch ${activeBatchId}] Syncing workspace ${i + 1}/${ws.length}: ${w.groupId}`,
         );
@@ -126,7 +126,7 @@ export default async function handler(
       const MAX_CONSECUTIVE_CONNECTION_FAILURES = 2;
       for (let i = 0; i < ws.length; i++) {
         const w = ws[i];
-        ids.push(w.groupId);
+        ids.push(Number(w.groupId));
         console.log(
           `[cron-update-roles] Syncing workspace ${i + 1}/${ws.length}: ${w.groupId}`,
         );

@@ -1078,7 +1078,7 @@ const Profile: pageWithLayout<pageProps> = ({
                     name: qp.name || "",
                     type: qp.type || "",
                     value: qp.requirement || 0,
-                    workspaceGroupId: parseInt(router.query.id as string),
+                    workspaceGroupId: BigInt(router.query.id as string),
                     description: null,
                     sessionType: null,
                     completionType: null,

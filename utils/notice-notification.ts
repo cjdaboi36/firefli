@@ -3,7 +3,7 @@ import { BloxlinkAPI, decryptApiKey } from './bloxlink';
 import { decryptToken } from './discord';
 
 export async function sendNoticeNotification(
-  workspaceGroupId: number,
+  workspaceGroupId: bigint | number,
   userId: number,
   noticeType: 'submit' | 'approval' | 'denial',
   noticeDetails: {

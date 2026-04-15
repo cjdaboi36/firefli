@@ -233,7 +233,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const rolesByRank: any[] = [];
     
     if (workspace) {
-      const roles = await noblox.getRoles(workspace.groupId);
+      const roles = await noblox.getRoles(Number(workspace.groupId));
       roles.sort((a, b) => a.rank - b.rank);
       rolesByRank.push(...roles);
       roles.forEach(role => {

@@ -15,7 +15,7 @@ type Data = {
 		groupId: number
 		groupThumbnail: string
 		groupName: string,
-		roles: role[],
+		roles: any[],
 		yourRole: string | null,
 		yourPermission: string[]
 		isAdmin: boolean
@@ -157,14 +157,14 @@ export async function handler(
 	const isAdmin = membership?.isAdmin || false;
 	
 	res.status(200).json({ success: true, permissions: user.roles[0].permissions, workspace: {
-		groupId: workspace.groupId,
+		groupId: Number(workspace.groupId),
 		groupThumbnail: groupLogo,
 		groupName: groupName,
 		yourPermission: isAdmin ? Object.values(permissions) : user.roles[0].permissions,
 		isAdmin,
 		ownerId: workspace.ownerId ? Number(workspace.ownerId) : null,
 		groupTheme: themeconfig,
-		roles: workspace.roles,
+		roles: workspace.roles.map(r => ({ ...r, workspaceGroupId: Number(r.workspaceGroupId) })),
 		yourRole: user.roles[0].id,
 		settings: {
 			alliesEnabled: (await getConfig('allies', workspace.groupId))?.enabled || false,

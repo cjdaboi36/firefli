@@ -176,7 +176,7 @@ function buildSessionEmbed(
 }
 
 export async function sendSessionNotification(
-  workspaceGroupId: number,
+  workspaceGroupId: bigint | number,
   trigger: 'create' | 'claim' | 'start',
   sessionDetails: SessionDetails
 ) {

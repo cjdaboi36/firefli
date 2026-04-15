@@ -18,7 +18,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const post = await prisma.wallPost.findUnique({ where: { id: postId } });
 
-  if (!post || post.workspaceGroupId !== groupId) {
+  if (!post || post.workspaceGroupId !== BigInt(groupId)) {
     return res.status(404).json({ success: false, error: "Post not found" });
   }
 

@@ -106,7 +106,7 @@ export async function handler(
 				});
 				
 				return {
-					groupId: role.workspaceGroupId,
+					groupId: Number(role.workspaceGroupId),
 					groupThumbnail: workspace?.groupLogo,
 					groupName: workspace?.groupName,
 					ownerId: workspace?.ownerId ? Number(workspace.ownerId) : null,

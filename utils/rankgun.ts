@@ -110,7 +110,7 @@ export class RankGunAPI {
 }
 
 export async function getRankGun(
-  workspaceGroupId: number
+  workspaceGroupId: bigint | number
 ): Promise<RankGun | null> {
   try {
     const { default: prisma } = await import("@/utils/database");
@@ -190,7 +190,7 @@ class RobloxCloudProvider implements RankingProvider {
 }
 
 export async function getRankingProvider(
-  workspaceGroupId: number
+  workspaceGroupId: bigint | number
 ): Promise<RankingProvider | null> {
   try {
     const { default: prisma } = await import("@/utils/database");
@@ -212,7 +212,7 @@ export async function getRankingProvider(
     if (settings.rankingProvider === "roblox_cloud") {
       if (!settings.robloxApiKey) return null;
       const { RobloxCloudRankingAPI } = await import("@/utils/openCloud");
-      const api = new RobloxCloudRankingAPI(settings.robloxApiKey, workspaceGroupId);
+      const api = new RobloxCloudRankingAPI(settings.robloxApiKey, Number(workspaceGroupId));
       return new RobloxCloudProvider(api);
     }
 

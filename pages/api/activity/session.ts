@@ -56,7 +56,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const parsedConfig = JSON.parse(JSON.stringify(config.value));
 
     const userRank = await noblox
-      .getRankInGroup(groupId, userid)
+      .getRankInGroup(Number(groupId), userid)
       .catch(() => null);
     await checkSpecificUser(userid);
 

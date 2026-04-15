@@ -19,7 +19,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     where: { id: templateId },
   });
 
-  if (!existing || existing.workspaceGroupId !== workspaceGroupId) {
+  if (!existing || existing.workspaceGroupId !== BigInt(workspaceGroupId)) {
     return res.status(404).json({ success: false, error: "Template not found" });
   }
 
@@ -40,7 +40,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         resolvedCategoryId = null;
       } else if (typeof categoryId === "string") {
         const cat = await prisma.sessionRoleCategory.findUnique({ where: { id: categoryId } });
-        resolvedCategoryId = (cat && cat.workspaceGroupId === workspaceGroupId) ? categoryId : null;
+        resolvedCategoryId = (cat && cat.workspaceGroupId === BigInt(workspaceGroupId)) ? categoryId : null;
       }
     }
 

@@ -4,7 +4,7 @@ import { getConfig } from "@/utils/configEngine";
 import { getResetStart } from "@/utils/activityrest";
 
 type ResetResult = {
-  workspaceId: number;
+  workspaceId: bigint;
   workspaceName: string;
   success: boolean;
   error?: string;
@@ -139,7 +139,7 @@ export default async function handler(
   }
 }
 
-async function performReset(workspaceGroupId: number) {
+async function performReset(workspaceGroupId: bigint | number) {
   const periodStart = await getResetStart(workspaceGroupId);
 
   const periodEnd = new Date();
@@ -186,7 +186,7 @@ async function performReset(workspaceGroupId: number) {
 
   const historyRecords: {
     userId: bigint;
-    workspaceGroupId: number;
+    workspaceGroupId: bigint | number;
     periodStart: Date;
     periodEnd: Date;
     minutes: number;

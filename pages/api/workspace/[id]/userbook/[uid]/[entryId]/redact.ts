@@ -26,7 +26,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       where: { id: entryId as string },
     });
     if (!entry) return res.status(404).json({ success: false, error: "Entry not found" });
-    if (entry.workspaceGroupId !== workspaceGroupId)
+    if (entry.workspaceGroupId !== BigInt(workspaceGroupId))
       return res.status(403).json({ success: false, error: "WorkspaceID doesn't match." });
 
     const { redacted } = req.body as { redacted?: boolean };

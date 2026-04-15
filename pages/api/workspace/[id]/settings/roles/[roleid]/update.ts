@@ -32,7 +32,7 @@ export async function handler(
 			return res.status(404).json({ success: false, error: 'Workspace not found' });
 		}
 		
-		const robloxRoles = await noblox.getRoles(workspace.groupId);
+		const robloxRoles = await noblox.getRoles(Number(workspace.groupId));
 		const guestRole = robloxRoles.find(r => r.rank === 0);
 		
 		if (guestRole && groupRoles.includes(guestRole.id)) {

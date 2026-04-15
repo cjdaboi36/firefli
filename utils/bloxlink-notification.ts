@@ -4,7 +4,7 @@ import DiscordAPI, { decryptToken } from './discord';
 import { getUsername } from './userinfoEngine';
 
 export async function sendBloxlinkNotification(
-  workspaceGroupId: number,
+  workspaceGroupId: bigint | number,
   targetUserId: number,
   action: 'promotion' | 'demotion' | 'warning' | 'termination' | 'resignation',
   details: {

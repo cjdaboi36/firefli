@@ -364,10 +364,10 @@ export function withPermissionCheckSsr(
   });
 }
 
-export async function checkGroupRoles(groupID: number) {
+export async function checkGroupRoles(groupID: bigint | number) {
   try {
     console.log(`[Refresh] Starting sync for group ${groupID}`);
-    const openCloudApiKey = await getWorkspaceRobloxApiKey(groupID);
+    const openCloudApiKey = await getWorkspaceRobloxApiKey(Number(groupID));
     if (!openCloudApiKey) {
       console.warn(`[Refresh] No Open Cloud API key configured for group ${groupID} — skipping workspace sync`);
       return;
@@ -375,8 +375,8 @@ export async function checkGroupRoles(groupID: number) {
     
     try {
       const [logo, group] = await Promise.all([
-        noblox.getLogo(groupID).catch(() => null),
-        noblox.getGroup(groupID).catch(() => null),
+        noblox.getLogo(Number(groupID)).catch(() => null),
+        noblox.getGroup(Number(groupID)).catch(() => null),
       ]);
 
       if (logo || group) {
@@ -615,7 +615,7 @@ export async function checkGroupRoles(groupID: number) {
         for (const rank of trackedRanks) {
           console.log(`[Refresh] Fetching members for role "${rank.name}" (ID: ${rank.id}) in group ${groupID}...`);
           try {
-            const roleMembers = await fetchOpenCloudRoleMembers(groupID, rank.id, openCloudApiKey);
+            const roleMembers = await fetchOpenCloudRoleMembers(Number(groupID), rank.id, openCloudApiKey);
             console.log(`[Refresh] Role "${rank.name}": ${roleMembers.length} members`);
             for (const member of roleMembers) {
               userRoleMap.set(member.userId, {
@@ -1244,7 +1244,7 @@ export async function checkSpecificUser(userID: number) {
   for (const w of ws) {
     await delay(100);
     
-    const membership = userGroupMemberships.get(w.groupId);
+    const membership = userGroupMemberships.get(Number(w.groupId));
     const userRoleId = membership?.roleId || null;
     
     await prisma.rank.upsert({

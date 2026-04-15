@@ -87,7 +87,7 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
         };
       }
 
-      if (session.sessionType.workspaceGroupId !== Number(id)) {
+      if (session.sessionType.workspaceGroupId !== BigInt(id as string)) {
         return {
           notFound: true,
         };

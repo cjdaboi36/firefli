@@ -31,7 +31,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         .json({ success: false, error: "Workspace not found" });
     }
 
-    const roles = await noblox.getRoles(workspace.groupId);
+    const roles = await noblox.getRoles(Number(workspace.groupId));
     const sortedRoles = roles.sort((a, b) => a.rank - b.rank);
     const ranks = sortedRoles
       .filter((role) => role.rank !== 0)

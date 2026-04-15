@@ -7,7 +7,7 @@ datasource db {
 }
 
 model workspace {
-  groupId             Int                        @id @unique
+  groupId             BigInt                     @id @unique
   groupLogo           String?
   groupName           String?
   lastSynced          DateTime?
@@ -54,7 +54,7 @@ model config {
   value            Json
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId])
 }
 
@@ -132,7 +132,7 @@ model role {
   id               String        @id @unique @default(uuid()) @db.Uuid
   permissions      String[]
   isOwnerRole      Boolean?      @default(false)
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   name             String
   groupRoles       Int[]
   color            String?
@@ -159,7 +159,7 @@ model department {
   id                String             @id @unique @default(uuid()) @db.Uuid
   name              String
   color             String?
-  workspaceGroupId  Int
+  workspaceGroupId  BigInt
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   departmentMembers DepartmentMember[]
@@ -171,7 +171,7 @@ model department {
 
 model DepartmentMember {
   departmentId     String          @db.Uuid
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   userId           BigInt
   department       department      @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   workspaceMember  workspaceMember @relation(fields: [workspaceGroupId, userId], references: [workspaceGroupId, userId], onDelete: Cascade)
@@ -194,7 +194,7 @@ model wallPost {
   image            String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   authorId         BigInt
   author           user      @relation(fields: [authorId], references: [userid])
   workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId])
@@ -204,7 +204,7 @@ model wallPost {
 
 model StickyAnnouncement {
   id               Int       @id @default(autoincrement())
-  workspaceGroupId Int       @unique
+  workspaceGroupId BigInt       @unique
   title            String
   subtitle         String?
   sections         Json
@@ -218,7 +218,7 @@ model StickyAnnouncement {
 
 model AuditLog {
   id               Int      @id @default(autoincrement())
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   userId           BigInt?
   action           String
   entity           String?
@@ -234,7 +234,7 @@ model SessionType {
   description        String?
   gameId             BigInt?
   allowUnscheduled   Boolean
-  workspaceGroupId   Int
+  workspaceGroupId   BigInt
   statues            Json[]
   slots              Json[]
   sessions           Session[]
@@ -253,7 +253,7 @@ model SessionRoleTemplate {
   hostRole         String?
   slots            Int                  @default(1)
   groupRoles       Int[]
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   archived         Boolean              @default(false)
   createdAt        DateTime             @default(now())
   category         SessionRoleCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -267,7 +267,7 @@ model SessionRoleCategory {
   id               String                @id @unique @default(uuid()) @db.Uuid
   name             String
   weight           Int                   @default(0)
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   archived         Boolean               @default(false)
   createdAt        DateTime              @default(now())
   templates        SessionRoleTemplate[]
@@ -280,7 +280,7 @@ model SessionTag {
   id               String        @id @unique @default(uuid()) @db.Uuid
   name             String
   color            String
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   allowedTypes     String[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
@@ -375,7 +375,7 @@ model ActivitySession {
   startTime        DateTime
   endTime          DateTime?
   idleTime         BigInt?
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   messages         Int?
   universeId       BigInt?
   sessionMessage   String?
@@ -397,7 +397,7 @@ model apiKey {
   lastUsed         DateTime?
   createdAt        DateTime  @default(now())
   expiresAt        DateTime?
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   createdById      BigInt
   createdBy        user      @relation(fields: [createdById], references: [userid])
   workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId])
@@ -412,7 +412,7 @@ model inactivityNotice {
   approved         Boolean?  @default(false)
   reviewed         Boolean?  @default(false)
   revoked          Boolean?  @default(false)
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   reviewComment      String?
   createdAt          DateTime  @default(now())
   approvedAt         DateTime?
@@ -433,7 +433,7 @@ model document {
   createdAt              DateTime               @default(now())
   updatedAt              DateTime               @updatedAt
   ownerId                BigInt
-  workspaceGroupId       Int
+  workspaceGroupId       BigInt
   acknowledgmentDeadline DateTime?
   isTrainingDocument     Boolean                @default(false)
   requiresAcknowledgment Boolean                @default(false)
@@ -458,7 +458,7 @@ model userBook {
   adminId          BigInt
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   rankAfter        Int?
   rankBefore       Int?
   rankNameAfter    String?
@@ -474,7 +474,7 @@ model userBook {
 model rank {
   userId           BigInt
   rankId           BigInt
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   user             user      @relation(fields: [userId], references: [userid], onDelete: Cascade)
   workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId], onDelete: Cascade)
 
@@ -485,7 +485,7 @@ model Quota {
   id               String            @id @default(uuid()) @db.Uuid
   type             String
   value            Int?
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   name             String
   description      String?
   sessionType      String?
@@ -500,7 +500,7 @@ model UserQuotaCompletion {
   id               String    @id @default(uuid()) @db.Uuid
   quotaId          String    @db.Uuid
   userId           BigInt
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   completed        Boolean   @default(false)
   completedAt      DateTime?
   completedBy      BigInt?   // The user who marked it complete (for manager signoff)
@@ -520,7 +520,7 @@ model UserQuotaCompletion {
 }
 
 model Ally {
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   name             String
   icon             String
   groupId          String
@@ -548,7 +548,7 @@ model allyVisit {
 }
 
 model workspaceMember {
-  workspaceGroupId     Int
+  workspaceGroupId     BigInt
   userId               BigInt
   joinDate             DateTime?
   birthdayDay          Int?
@@ -578,7 +578,7 @@ model ActivityAdjustment {
   id               String    @id @default(uuid()) @db.Uuid
   userId           BigInt
   actorId          BigInt
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   minutes          Int
   reason           String?
   createdAt        DateTime  @default(now())
@@ -598,7 +598,7 @@ model ActivityAdjustment {
 model ActivityHistory {
   id               String    @id @default(uuid()) @db.Uuid
   userId           BigInt
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   periodStart      DateTime
   periodEnd        DateTime
   minutes          Int
@@ -620,7 +620,7 @@ model ActivityHistory {
 
 model ActivityReset {
   id                  String    @id @default(uuid()) @db.Uuid
-  workspaceGroupId    Int
+  workspaceGroupId    BigInt
   resetById           BigInt?
   resetAt             DateTime  @default(now())
   previousPeriodStart DateTime?
@@ -634,7 +634,7 @@ model ActivityReset {
 
 model workspaceExternalServices {
   id                 Int       @id @default(autoincrement())
-  workspaceGroupId   Int       @unique
+  workspaceGroupId   BigInt       @unique
   rankingProvider    String?
   rankingToken       String?
   rankingWorkspaceId String?
@@ -648,7 +648,7 @@ model workspaceExternalServices {
 
 model SavedView {
   id               String    @id @default(uuid()) @db.Uuid
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   name             String
   color            String?
   icon             String?
@@ -685,7 +685,7 @@ model PolicyAcknowledgment {
 model PolicyShareableLink {
   id               String    @id @default(uuid()) @db.Uuid
   documentId       String    @db.Uuid
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   name             String
   description      String?
   createdById      BigInt
@@ -705,7 +705,7 @@ model PolicyShareableLink {
 
 model DiscordIntegration {
   id               String    @id @default(uuid()) @db.Uuid
-  workspaceGroupId Int       @unique
+  workspaceGroupId BigInt       @unique
   botToken         String
   guildId          String
   guildName        String?
@@ -808,7 +808,7 @@ model DiscordIntegration {
 
 model BloxlinkIntegration {
   id                 String    @id @default(uuid()) @db.Uuid
-  workspaceGroupId   Int       @unique
+  workspaceGroupId   BigInt       @unique
   apiKey             String
   discordServerId    String
   isActive           Boolean   @default(true)
@@ -833,7 +833,7 @@ model GameServer {
   id               String    @id @default(uuid()) @db.Uuid
   jobId            String
   placeId          BigInt
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   players          Json
   playerCount      Int
   maxPlayers       Int
@@ -849,7 +849,7 @@ model GameServer {
 
 model RemoteCommand {
   id               String    @id @default(uuid()) @db.Uuid
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   jobId            String
   commandType      String
   targetUserId     BigInt?
@@ -867,7 +867,7 @@ model RemoteCommand {
 
 model PlayerBan {
   id               String    @id @default(uuid()) @db.Uuid
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   userId           BigInt
   reason           String
   bannedById       BigInt
@@ -885,7 +885,7 @@ model PlayerBan {
 
 model PlayerReport {
   id               String    @id @default(uuid()) @db.Uuid
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   reporterUserId   BigInt
   reportedUserId   BigInt?
   reason           String
@@ -904,7 +904,7 @@ model PlayerReport {
 
 model AdminMessageLog {
   id               String    @id @default(uuid()) @db.Uuid
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   sentById         BigInt
   targetUserId     BigInt?
   message          String
@@ -917,7 +917,7 @@ model AdminMessageLog {
 
 model Recommendation {
   id               String                   @id @default(uuid()) @db.Uuid
-  workspaceGroupId Int
+  workspaceGroupId BigInt
   targetUserId     BigInt
   targetUsername    String
   targetPicture    String?

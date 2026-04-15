@@ -53,7 +53,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     let resolvedCategoryId: string | null = null;
     if (categoryId && typeof categoryId === "string") {
       const cat = await prisma.sessionRoleCategory.findUnique({ where: { id: categoryId } });
-      if (cat && cat.workspaceGroupId === workspaceGroupId) {
+      if (cat && cat.workspaceGroupId === BigInt(workspaceGroupId)) {
         resolvedCategoryId = categoryId;
       }
     }

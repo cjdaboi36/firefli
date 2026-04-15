@@ -4,7 +4,7 @@ const configCahce = new Map<string, any>();
 
 /** @returns {Promise<object>} */
 
-export async function getConfig(key: string, groupid: number) {
+export async function getConfig(key: string, groupid: bigint | number) {
 	if (configCahce.has(`${groupid}_${key}`)) {
 		return configCahce.get(`${groupid}_${key}`);
 	} else {
@@ -23,7 +23,7 @@ export async function getConfig(key: string, groupid: number) {
 	}
 }
 
-export async function fetchworkspace(groupid: number) {
+export async function fetchworkspace(groupid: bigint | number) {
 	const workspace = await prisma.workspace.findFirst({
 		where: {
 			groupId: groupid,
@@ -32,7 +32,7 @@ export async function fetchworkspace(groupid: number) {
 	return workspace;
 }
 
-export async function setConfig(key: string, value: any, groupid: number) {
+export async function setConfig(key: string, value: any, groupid: bigint | number) {
 	const config = await prisma.config.findFirst({
 		where: {
 			workspaceGroupId: groupid,
@@ -60,7 +60,7 @@ export async function setConfig(key: string, value: any, groupid: number) {
 	configCahce.set(`${groupid}_${key}`, value);
 }
 
-export async function refresh(key: string, groupid: number) {
+export async function refresh(key: string, groupid: bigint | number) {
 	configCahce.delete(`${groupid}_${key}`);
 }
 

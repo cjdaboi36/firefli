@@ -11,7 +11,7 @@ export async function sendSessionReviewNotification(params: {
   idleTime: number;
   messages: number;
   sessionMessage: string | null;
-  workspaceGroupId: number;
+  workspaceGroupId: bigint | number;
 }) {
   const { userId, startTime, endTime, idleTime, messages, sessionMessage, workspaceGroupId } = params;
 

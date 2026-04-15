@@ -15,7 +15,7 @@ type Data = {
 		groupId: number
 		groupThumbnail: string
 		groupName: string,
-		roles: role[],
+		roles: any[],
 		yourRole: string | null,
 		yourPermission: string[]
 		groupTheme: string,
@@ -76,8 +76,8 @@ export async function handler(
 				workspaceGroupId: workspace.groupId
 			}
 		}),
-		noblox.getGroup(workspace.groupId),
-		noblox.getLogo(workspace.groupId),
+		noblox.getGroup(Number(workspace.groupId)),
+		noblox.getLogo(Number(workspace.groupId)),
 		prisma.user.findUnique({
 			where: {
 				userid: req.session.userid
@@ -190,12 +190,12 @@ export async function handler(
 	const isAdmin = membership?.isAdmin || false;
 	
 	res.status(200).json({ success: true, permissions: user.roles[0].permissions, workspace: {
-		groupId: workspace.groupId,
+		groupId: Number(workspace.groupId),
 		groupThumbnail: groupLogo,
 		groupName: groupinfo.name,
 		yourPermission: isAdmin ? Object.values(permissions) : user.roles[0].permissions,
 		groupTheme: themeconfig,
-		roles: roles,
+		roles: roles.map(r => ({ ...r, workspaceGroupId: Number(r.workspaceGroupId) })),
 		yourRole: user.roles[0].id,
 		settings: {
 			alliesEnabled: alliesConfig?.enabled || false,

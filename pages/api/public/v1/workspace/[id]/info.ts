@@ -37,8 +37,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(404).json({ success: false, error: "Workspace not found" })
     }
 
-    const groupInfo = await noblox.getGroup(workspace.groupId)
-    const logo = await noblox.getLogo(workspace.groupId)
+    const groupInfo = await noblox.getGroup(Number(workspace.groupId))
+    const logo = await noblox.getLogo(Number(workspace.groupId))
 
     return res.status(200).json({
       success: true,
