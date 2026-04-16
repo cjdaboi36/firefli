@@ -922,20 +922,33 @@ const Home: pageWithLayout<pageProps> = (props) => {
         </div>
 
         <div className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-white text-left">
-                {isTodaySelected
-                  ? "Today"
-                  : selectedDate.toLocaleDateString("en-US", {
-                      weekday: "long",
-                      month: "long",
-                      day: "numeric",
-                    })}
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <div className="font-semibold text-zinc-900 dark:text-white text-left leading-tight text-lg sm:text-3xl">
+                {isTodaySelected ? (
+                  "Today"
+                ) : (
+                  <>
+                    <span className="sm:hidden">
+                      {selectedDate.toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                    <span className="hidden sm:inline">
+                      {selectedDate.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </>
+                )}
               </div>
               <button
                 onClick={() => setShowHistory(!showHistory)}
-                className={`inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                className={`inline-flex items-center justify-center whitespace-nowrap shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                   showHistory
                     ? "bg-primary text-white"
                     : "bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600"
