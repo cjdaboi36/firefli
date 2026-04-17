@@ -128,7 +128,7 @@ export function QuotasProgress({
   if (localQuotas.length === 0) {
     return (
       <div className="text-center py-10">
-        <div className="bg-zinc-50 dark:bg-zinc-800/60 rounded-xl p-8 max-w-md mx-auto">
+        <div className="rounded-xl p-8 max-w-md mx-auto">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
             <IconChartBar className="w-8 h-8 text-primary" />
           </div>
