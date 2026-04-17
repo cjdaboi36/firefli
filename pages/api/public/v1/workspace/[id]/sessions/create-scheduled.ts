@@ -106,7 +106,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         name: typeName,
         description,
         gameId,
-        slots,
+        roleSetIds,
         statues,
         schedule: scheduleData,
       } = sessionTypeData;
@@ -136,6 +136,40 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           });
       }
 
+      let resolvedSlots: any[] = [];
+      if (Array.isArray(roleSetIds) && roleSetIds.length > 0) {
+        const templates = await prisma.sessionRoleTemplate.findMany({
+          where: {
+            id: { in: roleSetIds },
+            workspaceGroupId: workspaceId,
+            archived: false,
+          },
+          include: { category: true },
+        });
+
+        if (templates.length !== roleSetIds.length) {
+          return res.status(400).json({
+            success: false,
+            error: "One or more roleSetIds are invalid or do not belong to this workspace",
+          });
+        }
+
+        resolvedSlots = roleSetIds.map((rid: string) => {
+          const t = templates.find((tmpl) => tmpl.id === rid)!;
+          return {
+            id: t.id,
+            name: t.name,
+            slots: t.slots,
+            weight: t.weight,
+            hostRole: t.hostRole ?? null,
+            groupRoles: t.groupRoles,
+            categoryId: t.categoryId ?? null,
+            categoryName: t.category?.name ?? null,
+            categoryWeight: t.category?.weight ?? 0,
+          };
+        });
+      }
+
       const sessionType = await prisma.sessionType.create({
         data: {
           workspaceGroupId: workspaceId,
@@ -144,7 +178,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           gameId: gameId ? BigInt(gameId) : null,
           allowUnscheduled: false,
           statues: statues || [],
-          slots: slots || [],
+          slots: resolvedSlots,
         },
       });
 

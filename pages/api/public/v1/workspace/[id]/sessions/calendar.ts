@@ -54,13 +54,6 @@ async function handler(
     const sessions = await prisma.session.findMany({
       where,
       include: {
-        owner: {
-          select: {
-            userid: true,
-            username: true,
-            picture: true,
-          },
-        },
         sessionType: {
           select: {
             id: true,
@@ -97,14 +90,14 @@ async function handler(
 
     const formattedSessions = sessions.map((session) => {
       const sessionSlots = (session.sessionType.slots as any[]) || [];
-      const participants = session.users.map((user) => {
+      const allParticipants = session.users.map((user) => {
         const matchingSlot = sessionSlots.find((s: any) => s.id === user.roleID);
         return {
           userId: Number(user.user.userid),
           username: user.user.username,
           thumbnail: user.user.picture,
           slot: user.slot,
-          role: user.roleID,
+          roleId: user.roleID,
           roleName: matchingSlot?.name || null,
           hostRole: matchingSlot?.hostRole || null,
           categoryId: matchingSlot?.categoryId || null,
@@ -113,9 +106,17 @@ async function handler(
           weight: matchingSlot?.weight ?? 0,
         };
       });
-      const primaryHostParticipant = participants.find(
-        (p) => p.hostRole === "primary" && p.slot === 0
-      ) || participants.find((p) => p.hostRole === "primary") || null;
+
+      const primaryHostParticipant =
+        allParticipants.find((p) => p.hostRole === "primary" && p.slot === 0) ||
+        allParticipants.find((p) => p.hostRole === "primary") ||
+        null;
+
+      const secondaryHostParticipants = allParticipants.filter(
+        (p) => p.hostRole === "secondary"
+      );
+
+      const participants = allParticipants.filter((p) => !p.hostRole);
 
       return {
         id: session.id,
@@ -148,21 +149,34 @@ async function handler(
               color: session.sessionTag.color,
             }
           : null,
-        host: session.owner
-          ? {
-              userId: Number(session.owner.userid),
-              username: session.owner.username,
-              thumbnail: session.owner.picture,
-            }
-          : null,
         primaryHost: primaryHostParticipant
           ? {
               userId: primaryHostParticipant.userId,
               username: primaryHostParticipant.username,
               thumbnail: primaryHostParticipant.thumbnail,
+              roleId: primaryHostParticipant.roleId,
+              slot: primaryHostParticipant.slot,
             }
           : null,
-        participants,
+        secondaryHosts: secondaryHostParticipants.map((p) => ({
+          userId: p.userId,
+          username: p.username,
+          thumbnail: p.thumbnail,
+          roleId: p.roleId,
+          slot: p.slot,
+        })),
+        participants: participants.map((p) => ({
+          userId: p.userId,
+          username: p.username,
+          thumbnail: p.thumbnail,
+          roleId: p.roleId,
+          roleName: p.roleName,
+          slot: p.slot,
+          categoryId: p.categoryId,
+          categoryName: p.categoryName,
+          categoryWeight: p.categoryWeight,
+          weight: p.weight,
+        })),
         status: (() => {
           const statues = (session.sessionType as any).statues || [];
           const computedStatus = getSessionStatus(session.date, session.duration, statues, session.ended);

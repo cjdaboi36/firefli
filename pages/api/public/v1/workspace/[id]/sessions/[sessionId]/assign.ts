@@ -30,7 +30,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .json({ success: false, error: "Missing session ID" });
   }
 
-  const { userId, roleId, slot, action, ownerId } = req.body;
+  const { userId, roleId, slot, action } = req.body;
 
   try {
     const key = await validateApiKey(apiKey, workspaceId);
@@ -65,27 +65,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(403).json({
         success: false,
         error: "Session does not belong to this workspace",
-      });
-    }
-
-    if (ownerId !== undefined) {
-      const newOwnerId = ownerId ? BigInt(ownerId) : null;
-
-      await prisma.session.update({
-        where: { id: sessionId },
-        data: { ownerId: newOwnerId },
-      });
-
-      await prisma.sessionLog.create({
-        data: {
-          sessionId: sessionId,
-          actorId: key.createdById,
-          targetId: newOwnerId,
-          action: newOwnerId ? "host_claimed" : "host_unclaimed",
-          metadata: {
-            createdVia: "public_api",
-          },
-        },
       });
     }
 
@@ -178,17 +157,35 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             },
           },
         },
-        owner: {
-          select: {
-            userid: true,
-            username: true,
-            displayName: true,
-            picture: true,
-          },
-        },
         sessionType: true,
       },
     });
+
+    const sessionSlots = (updatedSession!.sessionType.slots as any[]) || [];
+    const allAssigned = updatedSession!.users.map((su) => {
+      const matchingSlot = sessionSlots.find((s: any) => s.id === su.roleID);
+      return {
+        userId: su.userid.toString(),
+        username: su.user.username,
+        displayName: su.user.displayName,
+        picture: su.user.picture,
+        roleId: su.roleID,
+        roleName: matchingSlot?.name || null,
+        hostRole: matchingSlot?.hostRole || null,
+        slot: su.slot,
+        weight: matchingSlot?.weight ?? 0,
+        categoryId: matchingSlot?.categoryId || null,
+        categoryName: matchingSlot?.categoryName || null,
+        categoryWeight: matchingSlot?.categoryWeight ?? 0,
+      };
+    });
+
+    const primaryHost =
+      allAssigned.find((p) => p.hostRole === "primary" && p.slot === 0) ||
+      allAssigned.find((p) => p.hostRole === "primary") ||
+      null;
+    const secondaryHosts = allAssigned.filter((p) => p.hostRole === "secondary");
+    const participants = allAssigned.filter((p) => !p.hostRole);
 
     return res.status(200).json({
       success: true,
@@ -197,21 +194,36 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         id: updatedSession!.id,
         name: updatedSession!.name,
         date: updatedSession!.date,
-        ownerId: updatedSession!.ownerId?.toString(),
-        owner: updatedSession!.owner
+        primaryHost: primaryHost
           ? {
-              userId: updatedSession!.owner.userid.toString(),
-              username: updatedSession!.owner.username,
-              displayName: updatedSession!.owner.displayName,
-              picture: updatedSession!.owner.picture,
+              userId: primaryHost.userId,
+              username: primaryHost.username,
+              displayName: primaryHost.displayName,
+              picture: primaryHost.picture,
+              roleId: primaryHost.roleId,
+              slot: primaryHost.slot,
             }
           : null,
-        assignments: updatedSession!.users.map((su) => ({
-          userId: su.userid.toString(),
-          username: su.user.username,
-          displayName: su.user.displayName,
-          roleId: su.roleID,
-          slot: su.slot,
+        secondaryHosts: secondaryHosts.map((p) => ({
+          userId: p.userId,
+          username: p.username,
+          displayName: p.displayName,
+          picture: p.picture,
+          roleId: p.roleId,
+          slot: p.slot,
+        })),
+        participants: participants.map((p) => ({
+          userId: p.userId,
+          username: p.username,
+          displayName: p.displayName,
+          picture: p.picture,
+          roleId: p.roleId,
+          roleName: p.roleName,
+          slot: p.slot,
+          weight: p.weight,
+          categoryId: p.categoryId,
+          categoryName: p.categoryName,
+          categoryWeight: p.categoryWeight,
         })),
       },
     });

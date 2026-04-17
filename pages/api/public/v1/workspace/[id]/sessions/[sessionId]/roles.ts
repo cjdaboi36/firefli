@@ -62,14 +62,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             },
           },
         },
-        owner: {
-          select: {
-            userid: true,
-            username: true,
-            displayName: true,
-            picture: true,
-          },
-        },
       },
     });
 
@@ -101,7 +93,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return {
         roleId: slot.id,
         roleName: slot.name,
-        maxSlots: slot.number || 1,
+        hostRole: slot.hostRole || null,
+        maxSlots: slot.slots || 1,
         weight: slot.weight ?? 0,
         categoryId: slot.categoryId ?? null,
         categoryName: slot.categoryName ?? null,
@@ -118,14 +111,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         type: session.type,
         date: session.date,
         duration: session.duration,
-        owner: session.owner
-          ? {
-              userId: session.owner.userid.toString(),
-              username: session.owner.username,
-              displayName: session.owner.displayName,
-              picture: session.owner.picture,
-            }
-          : null,
         sessionTypeName: session.sessionType.name,
         roles: roleAssignments,
       },
