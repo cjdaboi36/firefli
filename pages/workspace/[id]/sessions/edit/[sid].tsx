@@ -213,6 +213,7 @@ const EditSession: pageWithLayout<
 
   const router = useRouter();
   const { scope } = router.query; // Get the scope from query params (single, future, all)
+  const isFutureTypeScope = scope === "future_type";
 
   const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
@@ -293,44 +294,61 @@ const EditSession: pageWithLayout<
 
     try {
       const formData = form.getValues();
-      const datePart = formData.date;
-      const timePart = formData.time || "00:00";
-      const localDateTime = `${datePart}T${timePart}`;
-      const newDate = new Date(localDateTime);
-
-      // Prevent updating a session to a past date/time
-      if (newDate.getTime() <= Date.now()) {
-        setFormError("Cannot set session date/time in the past. Choose a future date/time.");
-        setIsSubmitting(false);
-        setShowUpdateModal(false);
-        setUpdateAll(false);
-        return;
-      }
-
-      const [dateStr, timeStr] = localDateTime.split("T");
-
-      // If we have a scope from the pattern dialog, use the pattern update API
       if (scope && session.scheduleId) {
+        const patternPayload: Record<string, any> = {
+          updateScope: scope,
+          newDuration: formData.duration,
+          newName: formData.name,
+        };
+
+        if (!isFutureTypeScope) {
+          const datePart = formData.date;
+          const timePart = formData.time || "00:00";
+          const localDateTime = `${datePart}T${timePart}`;
+          const newDate = new Date(localDateTime);
+
+          // Prevent updating a session to a past date/time
+          if (newDate.getTime() <= Date.now()) {
+            setFormError("Cannot set session date/time in the past. Choose a future date/time.");
+            setIsSubmitting(false);
+            setShowUpdateModal(false);
+            setUpdateAll(false);
+            return;
+          }
+
+          const [dateStr, timeStr] = localDateTime.split("T");
+          patternPayload.newDate = dateStr;
+          patternPayload.newTime = timeStr;
+        }
+
         await axios.post(
           `/api/workspace/${workspace.groupId}/sessions/${session.id}/update-pattern`,
-          {
-            updateScope: scope, // "single", "future", or "all"
-            newDate: dateStr,
-            newTime: timeStr,
-            newDuration: formData.duration,
-            newName: formData.name,
-          }
+          patternPayload
         );
         
         toast.success(
           scope === "single" 
             ? "Session updated successfully"
             : scope === "future"
-            ? "This and future sessions updated successfully"
-            : "All sessions in pattern updated successfully"
+            ? "Sessions updated successfully"
+            : scope === "future_type"
+            ? "Sessions updated successfully. Date/time was kept unchanged."
+            : "Sessions updated successfully"
         );
       } else {
-        // Use the original update API for non-pattern sessions
+        const datePart = formData.date;
+        const timePart = formData.time || "00:00";
+        const localDateTime = `${datePart}T${timePart}`;
+        const newDate = new Date(localDateTime);
+        if (newDate.getTime() <= Date.now()) {
+          setFormError("Cannot set session date/time in the past. Choose a future date/time.");
+          setIsSubmitting(false);
+          setShowUpdateModal(false);
+          setUpdateAll(false);
+          return;
+        }
+
+        const [dateStr, timeStr] = localDateTime.split("T");
         await axios.put(
           `/api/workspace/${workspace.groupId}/sessions/manage/${session.id}/manage`,
           {
@@ -505,6 +523,7 @@ const EditSession: pageWithLayout<
             <p className="text-blue-600 dark:text-blue-300 text-sm">
               {scope === "single" && "Changes will only affect this session."}
               {scope === "future" && "Changes will affect this and all future sessions on the same day of the week."}
+              {scope === "future_type" && "Changes will affect this and future sessions of the same type. Session date/time is locked and will stay unchanged."}
               {scope === "all" && "Changes will affect all sessions in this recurring pattern."}
             </p>
           </div>
@@ -673,10 +692,15 @@ const EditSession: pageWithLayout<
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Session Date</label>
                   <input
                     type="date"
-                    {...form.register("date", { required: { value: true, message: "Session date is required" } })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg shadow-sm focus:ring-primary focus:border-primary dark:bg-zinc-700 dark:text-white"
+                    {...form.register("date", isFutureTypeScope ? {} : { required: { value: true, message: "Session date is required" } })}
+                    disabled={isFutureTypeScope}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg shadow-sm focus:ring-primary focus:border-primary dark:bg-zinc-700 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                   />
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Enter date in your local timezone.</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    {isFutureTypeScope
+                      ? "Date is locked for this scope and will remain unchanged."
+                      : "Enter date in your local timezone."}
+                  </p>
                   {form.formState.errors.date && <p className="mt-1 text-sm text-red-500">{form.formState.errors.date.message as string}</p>}
                 </div>
 
@@ -684,9 +708,15 @@ const EditSession: pageWithLayout<
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Session Time</label>
                   <input
                     type="time"
-                    {...form.register("time", { required: { value: true, message: "Session time is required" } })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg shadow-sm focus:ring-primary focus:border-primary dark:bg-zinc-700 dark:text-white"
+                    {...form.register("time", isFutureTypeScope ? {} : { required: { value: true, message: "Session time is required" } })}
+                    disabled={isFutureTypeScope}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg shadow-sm focus:ring-primary focus:border-primary dark:bg-zinc-700 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                   />
+                  {isFutureTypeScope && (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      Time is locked for this scope and will remain unchanged.
+                    </p>
+                  )}
                   {form.formState.errors.time && <p className="mt-1 text-sm text-red-500">{form.formState.errors.time.message as string}</p>}
                 </div>
 

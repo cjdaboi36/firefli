@@ -438,7 +438,7 @@ const SessionRoles = () => {
       onChange={(e) => onChange(e.target.value)}
       className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-600 rounded-lg dark:bg-zinc-700 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary"
     >
-      <option value="">— None —</option>
+      <option value="">- None -</option>
       {categories.map((c) => (
         <option key={c.id} value={c.id}>{c.name}</option>
       ))}
@@ -637,7 +637,7 @@ const SessionRoles = () => {
                                   <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">Host type</label>
                                   <select value={editHostRole} onChange={(e) => setEditHostRole(e.target.value as "primary" | "secondary" | "")}
                                     className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-600 rounded-lg dark:bg-zinc-700 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary">
-                                    <option value="">— None —</option>
+                                    <option value="">- None -</option>
                                     <option value="primary">Primary Host</option>
                                     <option value="secondary">Secondary Host</option>
                                   </select>
@@ -741,7 +741,7 @@ const SessionRoles = () => {
                     <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">Host type</label>
                     <select value={newHostRole} onChange={(e) => setNewHostRole(e.target.value as "primary" | "secondary" | "")}
                       className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-600 rounded-lg dark:bg-zinc-700 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary">
-                      <option value="">— None —</option>
+                      <option value="">- None -</option>
                       <option value="primary">Primary Host</option>
                       <option value="secondary">Secondary Host</option>
                     </select>

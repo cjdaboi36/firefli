@@ -5,7 +5,7 @@ import { IconCalendarRepeat, IconCalendar, IconCalendarEvent, IconX } from "@tab
 interface PatternEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (scope: "single" | "future" | "all") => void;
+  onConfirm: (scope: "single" | "future" | "future_type" | "all") => void;
   session: any;
 }
 
@@ -15,7 +15,7 @@ export default function PatternEditDialog({
   onConfirm,
   session,
 }: PatternEditDialogProps) {
-  const [selectedScope, setSelectedScope] = useState<"single" | "future" | "all">("single");
+  const [selectedScope, setSelectedScope] = useState<"single" | "future" | "future_type" | "all">("single");
 
   const handleConfirm = () => {
     onConfirm(selectedScope);
@@ -145,6 +145,37 @@ export default function PatternEditDialog({
                                 </div>
                                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                                   Edit all future sessions on {dayOfWeek} at {timeString}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </RadioGroup.Option>
+
+                      <RadioGroup.Option value="future_type">
+                        {({ checked }) => (
+                          <div
+                            className={`cursor-pointer rounded-lg p-4 transition-all ${
+                              checked
+                                ? "bg-primary/10 border-2 border-primary"
+                                : "bg-zinc-50 dark:bg-zinc-800 border-2 border-transparent hover:border-zinc-300 dark:hover:border-zinc-600"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-1 ${checked ? "text-primary" : "text-zinc-400"}`}>
+                                <IconCalendarEvent className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-zinc-900 dark:text-white">
+                                    This and future sessions of this type
+                                  </span>
+                                  {checked && (
+                                    <div className="w-2 h-2 rounded-full bg-primary" />
+                                  )}
+                                </div>
+                                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                                  Edit this session and all future {session.type || "other"} sessions across all times and days
                                 </p>
                               </div>
                             </div>

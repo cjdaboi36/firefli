@@ -23,17 +23,24 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const { sid } = req.query;
   const { updateScope, newDate, newTime, newDuration, newName } = req.body;
 
-  if (!updateScope || !["single", "future", "all"].includes(updateScope)) {
+  if (!updateScope || !["single", "future", "future_type", "all"].includes(updateScope)) {
     return res.status(400).json({ 
       success: false, 
-      error: "Invalid or missing updateScope. Must be 'single', 'future', or 'all'" 
+      error: "Invalid or missing updateScope. Must be 'single', 'future', 'future_type', or 'all'" 
     });
   }
 
   try {
     const originalSession = await prisma.session.findUnique({
       where: { id: sid as string },
-      include: { schedule: true },
+      include: {
+        schedule: true,
+        sessionType: {
+          select: {
+            workspaceGroupId: true,
+          },
+        },
+      },
     });
 
     if (!originalSession) {
@@ -132,6 +139,60 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
             updateScope: "future",
             patternId: originalSession.scheduleId,
             dayOfWeek: dayOfWeek,
+            affectedCount: updatedCount,
+            newTime: newTime,
+            newDuration: newDuration,
+            newName: newName,
+          },
+        },
+      });
+    } else if (updateScope === "future_type") {
+      const originalDate = new Date(originalSession.date);
+      const normalisedType = (originalSession.type || "other").toLowerCase();
+
+      const sessionsToUpdate = await prisma.session.findMany({
+        where: {
+          date: {
+            gte: originalDate,
+          },
+          sessionType: {
+            workspaceGroupId: originalSession.sessionType.workspaceGroupId,
+          },
+          OR: [
+            {
+              type: {
+                equals: normalisedType,
+                mode: "insensitive",
+              },
+            },
+            ...(normalisedType === "other" ? [{ type: null }] : []),
+          ],
+        },
+      });
+
+      if (sessionsToUpdate.length > 0) {
+        // For future_type scope, date/time is intentionally immutable.
+        const updateData: any = {};
+        if (newDuration !== undefined) updateData.duration = newDuration;
+        if (newName !== undefined) updateData.name = newName;
+
+        if (Object.keys(updateData).length > 0) {
+          const result = await prisma.session.updateMany({
+            where: { id: { in: sessionsToUpdate.map((s) => s.id) } },
+            data: updateData,
+          });
+          updatedCount = result.count;
+        }
+      }
+
+      await prisma.sessionLog.create({
+        data: {
+          sessionId: sid as string,
+          actorId: BigInt(req.session.userid),
+          action: "session_pattern_updated",
+          metadata: {
+            updateScope: "future_type",
+            sessionType: normalisedType,
             affectedCount: updatedCount,
             newTime: newTime,
             newDuration: newDuration,

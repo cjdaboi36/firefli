@@ -650,7 +650,7 @@ const Home: pageWithLayout<pageProps> = (props) => {
     }
   };
 
-  const handlePatternEditConfirm = (scope: "single" | "future" | "all") => {
+  const handlePatternEditConfirm = (scope: "single" | "future" | "future_type" | "all") => {
     if (!sessionToEdit) return;
     router.push({
       pathname: `/workspace/${router.query.id}/sessions/edit/${sessionToEdit.id}`,
