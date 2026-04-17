@@ -22,6 +22,10 @@ type WallPostWithAuthor = wallPost & {
       color: string | null;
     }>;
   };
+  reactions?: Array<{
+    emoji: string;
+    userId: string;
+  }>;
 };
 import moment from "moment";
 import { withSessionSsr } from "@/lib/withSession";
@@ -36,7 +40,7 @@ import {
   IconTrash,
   IconInbox,
 } from "@tabler/icons-react";
-import EmojiPicker, { Theme } from "emoji-picker-react";
+import EmojiPicker, { EmojiStyle, Theme } from "emoji-picker-react";
 import sanitizeHtml from "sanitize-html";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
@@ -45,6 +49,27 @@ const SANITIZE_OPTIONS = {
   allowedTags: [],
   allowedAttributes: {},
   disallowedTagsMode: "recursiveEscape" as const,
+};
+
+const WALLMSGS = [
+  "What's on your mind?",
+  "Share an update with your team...",
+  "What should the team know right now?",
+  "Drop a quick announcement...",
+  "Shout out someone who helped today.",
+  "What is next on your plan?",
+  "Post a reminder for upcoming events...",
+  "What went better than expected today?",
+  "Highlight one thing the team nailed.",
+  "What are you focusing on this week?",
+  "Share context before your next handoff...",
+  "Got news? Post it to everyone.",
+];
+
+const DEFAULT_WALLMSG = WALLMSGS[0];
+
+const getRandomWallMsg = () => {
+  return WALLMSGS[Math.floor(Math.random() * WALLMSGS.length)];
 };
 
 export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
@@ -90,6 +115,12 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
                 },
               },
             },
+          },
+        },
+        reactions: {
+          select: {
+            emoji: true,
+            userId: true,
           },
         },
       },
@@ -192,6 +223,10 @@ const Wall: pageWithLayout<pageProps> = (props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [postToDelete, setPostToDelete] = useState<number | null>(null);
+  const [composerPlaceholder, setComposerPlaceholder] = useState(DEFAULT_WALLMSG);
+  const [showReactionPickerForPost, setShowReactionPickerForPost] = useState<
+    number | null
+  >(null);
 
   // Sanitize posts on client-side as an extra layer of security
   useEffect(() => {
@@ -207,6 +242,10 @@ const Wall: pageWithLayout<pageProps> = (props) => {
       setPosts(sanitizedPosts);
     }
   }, [props.posts]);
+
+  useEffect(() => {
+    setComposerPlaceholder(getRandomWallMsg());
+  }, []);
 
   const confirmDelete = async () => {
     if (!postToDelete) return;
@@ -239,7 +278,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
         toast.success("Wall message posted!");
         setWallMessage("");
         setSelectedImage(null);
-        setPosts([req.data.post, ...posts]);
+        setPosts([{ ...req.data.post, reactions: req.data.post?.reactions || [] }, ...posts]);
         setLoading(false);
       })
       .catch((error) => {
@@ -349,6 +388,75 @@ const Wall: pageWithLayout<pageProps> = (props) => {
     }
   };
 
+  const canReactOnWall = () => {
+    try {
+      return userIsAdmin || userPermissions.includes("react_wall");
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const getReactionCounts = (post: WallPostWithAuthor) => {
+    const counts = new Map<string, number>();
+    for (const reaction of post.reactions || []) {
+      counts.set(reaction.emoji, (counts.get(reaction.emoji) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([emoji, count]) => ({ emoji, count }))
+      .sort((a, b) => b.count - a.count || a.emoji.localeCompare(b.emoji));
+  };
+
+  const getUserReaction = (post: WallPostWithAuthor) => {
+    return (post.reactions || []).find(
+      (reaction) => String(reaction.userId) === String(login.userId),
+    );
+  };
+
+  const toggleReaction = async (postId: number, emoji: string) => {
+    if (!canReactOnWall()) return;
+
+    try {
+      const response = await axios.post(
+        `/api/workspace/${id}/wall/${postId}/reaction`,
+        { emoji },
+      );
+
+      if (!response.data?.success) {
+        toast.error(response.data?.error || "Failed to update reaction");
+        return;
+      }
+
+      setPosts((prev) =>
+        prev.map((post) => {
+          if (post.id !== postId) return post;
+
+          const currentReactions = post.reactions || [];
+          // Remove any existing reaction by this user
+          const filtered = currentReactions.filter(
+            (reaction) => String(reaction.userId) !== String(login.userId),
+          );
+
+          // If reacted = true, add the new reaction
+          let nextReactions = filtered;
+          if (response.data.reaction?.reacted) {
+            nextReactions = [
+              ...filtered,
+              { emoji, userId: String(login.userId) },
+            ];
+          }
+
+          return {
+            ...post,
+            reactions: nextReactions,
+          };
+        }),
+      );
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.response?.data?.error || "Failed to update reaction");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       <div className="pagePadding">
@@ -383,7 +491,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
               <div className="flex-1">
                 <textarea
                   className="w-full border-0 focus:ring-0 resize-none bg-transparent placeholder-gray-400 dark:placeholder-gray-500 text-zinc-900 dark:text-white"
-                  placeholder="What's on your mind?"
+                  placeholder={composerPlaceholder}
                   value={wallMessage}
                   onChange={(e) => setWallMessage(e.target.value)}
                   rows={3}
@@ -432,6 +540,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
                         <div className="absolute top-full left-0 mt-2 z-10">
                           <EmojiPicker
                             onEmojiClick={onEmojiClick}
+                            emojiStyle={EmojiStyle.NATIVE}
                             theme={
                               document.documentElement.classList.contains(
                                 "dark",
@@ -506,7 +615,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
                           {post.author.departments &&
                             post.author.departments.length > 0 && (
                               <span
-                                className="text-xs px-2 py-0.5 rounded-full text-white font-medium"
+                                className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full text-white font-medium whitespace-nowrap"
                                 style={{
                                   backgroundColor:
                                     post.author.departments[0].color ||
@@ -561,11 +670,85 @@ const Wall: pageWithLayout<pageProps> = (props) => {
                         />
                       </div>
                     )}
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3">
-                      {moment(post.createdAt).format(
-                        "MMMM D, YYYY [at] h:mm A",
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                        <span className="sm:hidden">
+                          {moment(post.createdAt).format("DD/MM/YYYY h:mm A")}
+                        </span>
+                        <span className="hidden sm:inline">
+                          {moment(post.createdAt).format(
+                            "MMMM D, YYYY [at] h:mm A",
+                          )}
+                        </span>
+                      </p>
+                      {canReactOnWall() && (
+                        <div className="relative flex items-center gap-2">
+                          {(() => {
+                            const reactionSummary = getReactionCounts(post);
+                            const userReaction = getUserReaction(post);
+                            return (
+                              <>
+                                {reactionSummary.length > 0 && (
+                                  <div className="inline-flex items-center gap-1.5">
+                                    {reactionSummary.map(({ emoji, count }) => {
+                                      const isUserReaction = userReaction?.emoji === emoji;
+                                      return (
+                                        <button
+                                          key={`${post.id}-reaction-${emoji}`}
+                                          type="button"
+                                          onClick={() => toggleReaction(post.id, emoji)}
+                                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm border transition-colors ${
+                                            isUserReaction
+                                              ? "bg-primary/10 border-primary/30 text-primary"
+                                              : "bg-zinc-50 dark:bg-zinc-700/40 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-primary/50"
+                                          }`}
+                                        >
+                                          <span>{emoji}</span>
+                                          <span className="text-xs font-medium">{count}</span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setShowReactionPickerForPost(
+                                      showReactionPickerForPost === post.id ? null : post.id,
+                                    )
+                                  }
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-primary/50"
+                                  title="Add a reaction"
+                                >
+                                  <IconMoodSmile size={14} />
+                                  {!userReaction && "React"}
+                                </button>
+                              </>
+                            );
+                          })()}
+                          {showReactionPickerForPost === post.id && (
+                            <div className="absolute top-full right-0 mt-2 z-20">
+                              <EmojiPicker
+                                onEmojiClick={(emojiObject: any) => {
+                                  toggleReaction(post.id, emojiObject.emoji);
+                                  setShowReactionPickerForPost(null);
+                                }}
+                                emojiStyle={EmojiStyle.NATIVE}
+                                theme={
+                                  document.documentElement.classList.contains("dark")
+                                    ? Theme.DARK
+                                    : Theme.LIGHT
+                                }
+                                width={320}
+                                height={360}
+                                lazyLoadEmojis={true}
+                                searchPlaceholder="Search reactions..."
+                              />
+                            </div>
+                          )}
+                        </div>
                       )}
-                    </p>
+                    </div>
                   </div>
                 </div>
               </div>

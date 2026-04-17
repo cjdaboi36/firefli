@@ -24,11 +24,13 @@ const ACTION_LABELS: Record<string, string> = {
   'session.delete': 'Session Delete',
   'wall.post.delete': 'Wall Delete',
   'wall.post.create': 'Wall Create',
+  'wall.post.react': 'Wall React',
 };
 
 const PERMISSION_LABELS: Record<string, string> = {
   'view_wall': 'View wall',
   'post_on_wall': 'Post on wall',
+  'react_wall': 'React to wall posts',
   'delete_wall_posts': 'Delete wall posts',
   'sessions_shift_see': 'Shift Sessions - See',
   'sessions_shift_assign': 'Shift Sessions - Assign',

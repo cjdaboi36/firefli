@@ -127,6 +127,7 @@ export async function handler(
 	const permissions = {
 		"View wall": "view_wall",
 		"Post on wall": "post_on_wall",
+		"React to wall posts": "react_wall",
 		"Delete wall posts": "delete_wall_posts",
 		"Add photos to wall posts": "add_wall_photos",
 		...sessionPermissions,

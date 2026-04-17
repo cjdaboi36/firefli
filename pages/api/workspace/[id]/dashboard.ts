@@ -79,7 +79,8 @@ async function handler(
         prisma.wallPost.findMany({
           where: { workspaceGroupId: workspaceId },
           include: {
-            author: { select: { username: true, picture: true } }
+            author: { select: { username: true, picture: true } },
+            reactions: { select: { emoji: true, userId: true } },
           },
           orderBy: { createdAt: 'desc' },
           take: 10

@@ -101,6 +101,7 @@ model user {
   book                  userBook[]             @relation("bookUser")
   info                  userInfo?
   wallPosts             wallPost[]
+  wallPostReactions     wallPostReaction[]
   managedMembers        workspaceMember[]      @relation("LineManager")
   workspaceMemberships  workspaceMember[]
   Ally                  Ally[]                 @relation("AllyTouser")
@@ -198,8 +199,24 @@ model wallPost {
   authorId         BigInt
   author           user      @relation(fields: [authorId], references: [userid])
   workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId])
+  reactions        wallPostReaction[]
 
   @@index([workspaceGroupId, createdAt(sort: Desc)])
+}
+
+model wallPostReaction {
+  id         Int      @id @default(autoincrement())
+  emoji      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  wallPostId Int
+  userId     BigInt
+  post       wallPost @relation(fields: [wallPostId], references: [id], onDelete: Cascade)
+  user       user     @relation(fields: [userId], references: [userid], onDelete: Cascade)
+
+  @@unique([wallPostId, userId])
+  @@index([wallPostId])
+  @@index([userId])
 }
 
 model StickyAnnouncement {

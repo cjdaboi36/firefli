@@ -76,6 +76,7 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
     Wall: {
       "View wall": "view_wall",
       "Post on wall": "post_on_wall",
+      "React to wall posts": "react_wall",
       "Add photos to wall posts": "add_wall_photos",
       "Delete wall posts": "delete_wall_posts",
       "Edit sticky post": "edit_sticky_post",

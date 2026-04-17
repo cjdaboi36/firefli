@@ -11,6 +11,10 @@ import * as noblox from 'noblox.js'
 type WallPostWithAuthor = Omit<wallPost, 'authorId' | 'workspaceGroupId'> & {
 	authorId: string;
 	workspaceGroupId: number;
+	reactions?: Array<{
+		emoji: string;
+		userId: string;
+	}>;
 	author: {
 		userid: bigint;
 		username: string | null;
@@ -77,6 +81,12 @@ export async function handler(
 						}
 					}
 				}
+			},
+			reactions: {
+				select: {
+					emoji: true,
+					userId: true,
+				},
 			}
 		},
 		orderBy: {

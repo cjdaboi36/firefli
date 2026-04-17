@@ -54,6 +54,20 @@ type WallPostWithAuthor = wallPost & {
 			color: string | null;
 		}>;
 	};
+	reactions?: Array<{
+		emoji: string;
+		userId: string;
+	}>;
+};
+
+const getReactionCounts = (post: WallPostWithAuthor) => {
+	const counts = new Map<string, number>();
+	for (const reaction of post.reactions || []) {
+		counts.set(reaction.emoji, (counts.get(reaction.emoji) || 0) + 1);
+	}
+	return Array.from(counts.entries())
+		.map(([emoji, count]) => ({ emoji, count }))
+		.sort((a, b) => b.count - a.count || a.emoji.localeCompare(b.emoji));
 };
 
 const Wall: React.FC = () => {
@@ -112,7 +126,7 @@ const Wall: React.FC = () => {
 										</p>
 										{post.author.departments && post.author.departments.length > 0 && (
 											<span 
-												className="text-xs px-2 py-0.5 rounded-full text-white font-medium"
+												className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full text-white font-medium whitespace-nowrap"
 												style={{ backgroundColor: post.author.departments[0].color || '#3b82f6' }}
 											>
 												{post.author.departments[0].name}
@@ -136,9 +150,29 @@ const Wall: React.FC = () => {
 											/>
 										</div>
 									)}
-									<span className="text-sm text-zinc-500 dark:text-zinc-400 mt-2 block">
-										{moment(post.createdAt).format("MMM D")}
-									</span>
+									<div className="mt-3 flex items-center justify-between gap-3">
+										<p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+											<span className="sm:hidden">
+												{moment(post.createdAt).format("DD/MM/YYYY h:mm A")}
+											</span>
+											<span className="hidden sm:inline">
+												{moment(post.createdAt).format("MMMM D, YYYY [at] h:mm A")}
+											</span>
+										</p>
+										{getReactionCounts(post).length > 0 && (
+											<div className="inline-flex items-center gap-1.5">
+												{getReactionCounts(post).map(({ emoji, count }) => (
+													<div
+														key={`${post.id}-${emoji}`}
+														className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm bg-zinc-50 dark:bg-zinc-700/40 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+													>
+														<span>{emoji}</span>
+														<span className="text-xs font-medium">{count}</span>
+													</div>
+												))}
+											</div>
+										)}
+									</div>
 								</div>
 							</div>
 						</div>
