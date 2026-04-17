@@ -573,7 +573,13 @@ export const getServerSideProps = withPermissionCheckSsr(
     const sessionsHosted = allSessionParticipations.filter((participation) => {
       const slots = participation.session.sessionType.slots as any[];
       const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
-      return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+      return matchingSlot?.hostRole === "primary";
+    }).length;
+
+    const sessionsSecondaryHosted = allSessionParticipations.filter((participation) => {
+      const slots = participation.session.sessionType.slots as any[];
+      const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
+      return matchingSlot?.hostRole === "secondary";
     }).length;
 
     const sessionsAttended = allSessionParticipations.filter((participation) => {
@@ -777,6 +783,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         isUser: (req as any)?.session?.userid === Number(query?.uid as string),
         isAdmin,
         sessionsHosted: sessionsHosted,
+        sessionsSecondaryHosted: sessionsSecondaryHosted,
         sessionsAttended: sessionsAttended,
         allianceVisits: allianceVisits,
         quotas: JSON.parse(
@@ -851,6 +858,7 @@ type pageProps = {
   userBook: any;
   quotas: Quota[];
   sessionsHosted: number;
+  sessionsSecondaryHosted: number;
   sessionsAttended: number;
   allianceVisits: number;
   isUser: boolean;
@@ -921,6 +929,7 @@ const Profile: pageWithLayout<pageProps> = ({
   info,
   memberRoleName,
   sessionsHosted,
+  sessionsSecondaryHosted,
   sessionsAttended,
   allianceVisits,
   quotas,
@@ -952,6 +961,7 @@ const Profile: pageWithLayout<pageProps> = ({
     data,
     quotas,
     sessionsHosted,
+    sessionsSecondaryHosted,
     sessionsAttended,
     allianceVisits,
     sessions,
@@ -1090,6 +1100,7 @@ const Profile: pageWithLayout<pageProps> = ({
                 )
               : [],
             sessionsHosted: historicalData.activity.sessionsHosted,
+            sessionsSecondaryHosted: historicalData.activity.sessionsSecondaryHosted || 0,
             sessionsAttended: historicalData.activity.sessionsAttended,
             allianceVisits: historicalData.activity.allianceVisits || 0,
             sessions: historicalData.sessions || [],
@@ -1353,6 +1364,7 @@ const Profile: pageWithLayout<pageProps> = ({
                     data={displayData.data}
                     quotas={displayData.quotas}
                     sessionsHosted={displayData.sessionsHosted}
+                    sessionsSecondaryHosted={displayData.sessionsSecondaryHosted}
                     sessionsAttended={displayData.sessionsAttended}
                     allianceVisits={displayData.allianceVisits}
                     avatar={info.avatar}

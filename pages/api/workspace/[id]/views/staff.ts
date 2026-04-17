@@ -425,7 +425,13 @@ export default withPermissionCheck(
         const sessionsHosted = allSessionParticipations.filter((participation) => {
             const sessionSlots = participation.session.sessionType.slots as any[];
             const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
-            return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+            return matchingSlot?.hostRole === "primary";
+          }).length;
+
+        const sessionsSecondaryHosted = allSessionParticipations.filter((participation) => {
+            const sessionSlots = participation.session.sessionType.slots as any[];
+            const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+            return matchingSlot?.hostRole === "secondary";
           }).length;
 
         const sessionsAttended = allSessionParticipations.filter((participation) => {
@@ -437,9 +443,15 @@ export default withPermissionCheck(
         const sessionsLogged = new Set(allSessionParticipations.map((p) => p.sessionid)).size;
 
         const sessionsByType: Record<string, number> = {};
+        const secondaryHostedByType: Record<string, number> = {};
         for (const p of allSessionParticipations) {
           const type = (p.session as any)?.type || "other";
           sessionsByType[type] = (sessionsByType[type] || 0) + 1;
+          const pSlots = (p.session as any)?.sessionType?.slots as any[] || [];
+          const pSlot = pSlots.find((s: any) => s.id === p.roleID);
+          if (pSlot?.hostRole === "secondary") {
+            secondaryHostedByType[type] = (secondaryHostedByType[type] || 0) + 1;
+          }
         }
 
         const userIdStr = userId.toString();
@@ -478,6 +490,13 @@ export default withPermissionCheck(
                   currentValue = sessionsByType[userQuota.sessionType] || 0;
                 } else {
                   currentValue = sessionsHosted;
+                }
+                break;
+              case "sessions_secondary_host":
+                if (userQuota.sessionType && userQuota.sessionType !== "all") {
+                  currentValue = secondaryHostedByType[userQuota.sessionType] || 0;
+                } else {
+                  currentValue = sessionsSecondaryHosted;
                 }
                 break;
               case "sessions_attended":

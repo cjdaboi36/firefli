@@ -323,7 +323,9 @@ const Activity: pageWithLayout = () => {
       case "mins":
         return "minutes";
       case "sessions_hosted":
-        return "sessions hosted";
+        return "sessions primary host";
+      case "sessions_secondary_host":
+        return "sessions secondary host";
       case "sessions_attended":
         return "sessions attended";
       case "sessions_logged":

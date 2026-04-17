@@ -40,6 +40,7 @@ type Props = {
   data: any;
   quotas: (Quota & { currentValue?: number; percentage?: number })[];
   sessionsHosted: number;
+  sessionsSecondaryHosted: number;
   sessionsAttended: number;
   allianceVisits: number;
   avatar: string;
@@ -94,6 +95,7 @@ const Activity: FC<Props> = ({
   quotas,
   sessionsAttended,
   sessionsHosted,
+  sessionsSecondaryHosted,
   allianceVisits,
   avatar,
   sessions,
@@ -164,7 +166,8 @@ const Activity: FC<Props> = ({
     [key: string]: string;
   } = {
     mins: "minutes",
-    sessions_hosted: "sessions hosted",
+    sessions_hosted: "sessions hosted (primary)",
+    sessions_secondary_host: "sessions hosted (secondary)",
     sessions_attended: "sessions attended",
   };
 
@@ -361,6 +364,7 @@ const Activity: FC<Props> = ({
                   quotas={quotas}
                   displayMinutes={displayMinutes}
                   sessionsHosted={sessionsHosted}
+                  sessionsSecondaryHosted={sessionsSecondaryHosted}
                   sessionsAttended={sessionsAttended}
                   allianceVisits={allianceVisits}
                   canSignoffQuotas={canSignoffQuotas}

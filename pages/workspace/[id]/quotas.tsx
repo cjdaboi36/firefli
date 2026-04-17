@@ -201,6 +201,7 @@ export const getServerSideProps = withPermissionCheckSsr(
     });
 
     const hostedSessionsByType: Record<string, number> = {};
+    const secondaryHostedSessionsByType: Record<string, number> = {};
     const attendedSessionsByType: Record<string, number> = {};
     const loggedSessionsByType: Record<string, number> = {};
     const seenSessionIds = new Set<string>();
@@ -209,9 +210,10 @@ export const getServerSideProps = withPermissionCheckSsr(
       const slots = participation.session.sessionType.slots as any[];
       const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
       const type = participation.session.type || 'other';
-      const isHosted = matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
-      if (isHosted) {
+      if (matchingSlot?.hostRole === "primary") {
         hostedSessionsByType[type] = (hostedSessionsByType[type] || 0) + 1;
+      } else if (matchingSlot?.hostRole === "secondary") {
+        secondaryHostedSessionsByType[type] = (secondaryHostedSessionsByType[type] || 0) + 1;
       } else {
         attendedSessionsByType[type] = (attendedSessionsByType[type] || 0) + 1;
       }
@@ -224,7 +226,13 @@ export const getServerSideProps = withPermissionCheckSsr(
     const sessionsHosted = sessionParticipations.filter((participation) => {
       const slots = participation.session.sessionType.slots as any[];
       const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
-      return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+      return matchingSlot?.hostRole === "primary";
+    }).length;
+
+    const sessionsSecondaryHosted = sessionParticipations.filter((participation) => {
+      const slots = participation.session.sessionType.slots as any[];
+      const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
+      return matchingSlot?.hostRole === "secondary";
     }).length;
 
     const sessionsAttended = sessionParticipations.filter((participation) => {
@@ -381,6 +389,13 @@ export const getServerSideProps = withPermissionCheckSsr(
           currentValue = hostedCount;
           percentage = (hostedCount / quota.value) * 100;
           break;
+        case "sessions_secondary_host":
+          const secondaryHostedCount = quota.sessionType && quota.sessionType !== "all"
+            ? secondaryHostedSessionsByType[quota.sessionType] || 0
+            : sessionsSecondaryHosted;
+          currentValue = secondaryHostedCount;
+          percentage = (secondaryHostedCount / quota.value) * 100;
+          break;
         case "sessions_attended":
           const attendedCount = quota.sessionType && quota.sessionType !== "all"
             ? attendedSessionsByType[quota.sessionType] || 0
@@ -533,7 +548,8 @@ const Quotas: pageWithLayout<pageProps> = ({
 
   const types: { [key: string]: string } = {
     mins: "Minutes in game",
-    sessions_hosted: "Sessions hosted",
+    sessions_hosted: "Sessions hosted (primary)",
+    sessions_secondary_host: "Sessions hosted (secondary)",
     sessions_attended: "Sessions attended",
     sessions_logged: "Sessions logged",
     alliance_visits: "Alliance visits",
@@ -542,7 +558,8 @@ const Quotas: pageWithLayout<pageProps> = ({
 
   const typeDescriptions: { [key: string]: string } = {
     mins: "Total time spent in-game during the activity period",
-    sessions_hosted: "Number of sessions where the user was the host",
+    sessions_hosted: "Number of sessions where the user was the primary host",
+    sessions_secondary_host: "Number of sessions where the user held a secondary host role",
     sessions_attended:
       "Number of sessions the user participated in (not as host)",
     sessions_logged:
@@ -600,7 +617,7 @@ const Quotas: pageWithLayout<pageProps> = ({
     }
 
     if ( type !== "custom" && 
-      ["sessions_hosted", "sessions_attended", "sessions_logged"].includes(type)
+      ["sessions_hosted", "sessions_secondary_host", "sessions_attended", "sessions_logged"].includes(type)
     ) {
       payload.sessionType = sessionTypeFilter === "all" ? null : sessionTypeFilter;
     }
@@ -1157,7 +1174,10 @@ const Quotas: pageWithLayout<pageProps> = ({
                             >
                               <option value="mins">Minutes in Game</option>
                               <option value="sessions_hosted">
-                                Sessions Hosted
+                                Session Primary Host
+                              </option>
+                              <option value="sessions_secondary_host">
+                                Session Secondary Host
                               </option>
                               <option value="sessions_attended">
                                 Sessions Attended
@@ -1179,7 +1199,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                             )}
                           </div>
 
-                          {["sessions_hosted","sessions_attended","sessions_logged"].includes(watchedType) && (
+                          {["sessions_hosted","sessions_secondary_host","sessions_attended","sessions_logged"].includes(watchedType) && (
                             <div>
                               <label className="block text-sm font-medium text-zinc-700 mb-2 dark:text-white">
                                 Session Type Filter

@@ -21,6 +21,7 @@ type Props = {
   quotas: QuotaWithLinkage[];
   displayMinutes: number;
   sessionsHosted: number;
+  sessionsSecondaryHosted: number;
   sessionsAttended: number;
   allianceVisits: number;
   canSignoffQuotas?: boolean;
@@ -34,6 +35,7 @@ export function QuotasProgress({
   quotas,
   displayMinutes,
   sessionsHosted,
+  sessionsSecondaryHosted,
   sessionsAttended,
   allianceVisits,
   canSignoffQuotas = false,
@@ -61,6 +63,11 @@ export function QuotasProgress({
       }
       case "sessions_hosted": {
         return (sessionsHosted / quota.value) * 100;
+      }
+      case "sessions_secondary_host": {
+        return quota.currentValue !== undefined
+          ? (quota.currentValue / quota.value) * 100
+          : (sessionsSecondaryHosted / quota.value) * 100;
       }
       case "sessions_attended": {
         return (sessionsAttended / quota.value) * 100;
@@ -96,7 +103,11 @@ export function QuotasProgress({
         return `${displayMinutes} / ${quota.value} minutes`;
       }
       case "sessions_hosted": {
-        return `${sessionsHosted} / ${quota.value} sessions hosted`;
+        return `${sessionsHosted} / ${quota.value} sessions hosted (primary)`;
+      }
+      case "sessions_secondary_host": {
+        const val = quota.currentValue !== undefined ? quota.currentValue : sessionsSecondaryHosted;
+        return `${val} / ${quota.value} sessions hosted (secondary)`;
       }
       case "sessions_attended": {
         return `${sessionsAttended} / ${quota.value} sessions attended`;

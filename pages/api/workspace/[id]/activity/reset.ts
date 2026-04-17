@@ -168,7 +168,13 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       const sessionsHosted = allSessionParticipations.filter((participation) => {
           const sessionSlots = participation.session.sessionType.slots as any[];
           const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
-          return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+          return matchingSlot?.hostRole === "primary";
+        }).length;
+
+      const sessionsSecondaryHosted = allSessionParticipations.filter((participation) => {
+          const sessionSlots = participation.session.sessionType.slots as any[];
+          const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+          return matchingSlot?.hostRole === "secondary";
         }).length;
 
       const sessionsAttended = allSessionParticipations.filter((participation) => {
@@ -179,9 +185,15 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
       const sessionsLogged = new Set(allSessionParticipations.map(p => p.sessionid)).size;
       const sessionsByType: Record<string, number> = {};
+      const secondaryHostedByType: Record<string, number> = {};
       for (const p of allSessionParticipations) {
         const type = (p.session as any).type || 'other';
         sessionsByType[type] = (sessionsByType[type] || 0) + 1;
+        const pSlots = (p.session as any)?.sessionType?.slots as any[] || [];
+        const pSlot = pSlots.find((s: any) => s.id === p.roleID);
+        if (pSlot?.hostRole === "secondary") {
+          secondaryHostedByType[type] = (secondaryHostedByType[type] || 0) + 1;
+        }
       }
 
       const allianceVisits = await prisma.allyVisit.count({
@@ -282,6 +294,14 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
               currentValue = sessionsByType[quota.sessionType] || 0;
             } else {
               currentValue = sessionsHosted;
+            }
+            percentage = (currentValue / quota.value) * 100;
+            break;
+          case "sessions_secondary_host":
+            if (quota.sessionType && quota.sessionType !== 'all') {
+              currentValue = secondaryHostedByType[quota.sessionType] || 0;
+            } else {
+              currentValue = sessionsSecondaryHosted;
             }
             percentage = (currentValue / quota.value) * 100;
             break;
