@@ -256,6 +256,32 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       }
     }
 
+    try {
+      const v2Res = await fetch(`https://groups.roblox.com/v2/users/${userid}/groups/roles`);
+      if (v2Res.ok) {
+        const v2Data = await v2Res.json();
+        const membership = v2Data.data?.find((g: any) => g.group?.id === groupIdNumber);
+        if (membership?.role?.id) {
+          await prisma.rank.upsert({
+            where: {
+              userId_workspaceGroupId: {
+                userId: BigInt(userid!),
+                workspaceGroupId: groupIdNumber,
+              },
+            },
+            update: { rankId: BigInt(membership.role.id) },
+            create: {
+              userId: BigInt(userid!),
+              workspaceGroupId: groupIdNumber,
+              rankId: BigInt(membership.role.id),
+            },
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[setupworkspace] Failed to store owner rank ID:", err);
+    }
+
     return res.status(200).json({ success: true, user: userInfo });
   } catch (error: any) {
     if (error instanceof Error && error.message === "WORKSPACE_EXISTS") {

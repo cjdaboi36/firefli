@@ -214,6 +214,32 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       .json({ success: false, error: "Failed to create workspace" });
   }
 
+  try {
+    const rolesRes = await fetch(`https://groups.roblox.com/v1/groups/${groupId}/roles`);
+    if (rolesRes.ok) {
+      const rolesData = await rolesRes.json();
+      const roleInfo = rolesData.roles?.find((r: any) => r.rank === urrole);
+      if (roleInfo?.id) {
+        await prisma.rank.upsert({
+          where: {
+            userId_workspaceGroupId: {
+              userId: BigInt(req.session.userid),
+              workspaceGroupId: groupId,
+            },
+          },
+          update: { rankId: BigInt(roleInfo.id) },
+          create: {
+            userId: BigInt(req.session.userid),
+            workspaceGroupId: groupId,
+            rankId: BigInt(roleInfo.id),
+          },
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[createws] Failed to store owner rank ID:", err);
+  }
+
   if (process.env.DISCORD_WELCOME) {
     try {
       const ownerUsername = await getUsername(req.session.userid).catch(
