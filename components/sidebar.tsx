@@ -451,9 +451,13 @@ const Sidebar: NextPage = () => {
                   <SidebarTooltip key={section.name} label={section.name}>
                     <div className="relative">
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
                           if (section.href) {
-                            gotopage(section.href);
+                            if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                              window.open(section.href, '_blank');
+                            } else {
+                              gotopage(section.href);
+                            }
                           }
                         }}
                         className={clsx(
@@ -496,8 +500,12 @@ const Sidebar: NextPage = () => {
             {settingsAccessible && (
               <SidebarTooltip label="Settings">
                 <button
-                  onClick={() => {
-                    gotopage(settingsHref);
+                  onClick={(e) => {
+                    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                      window.open(settingsHref, '_blank');
+                    } else {
+                      gotopage(settingsHref);
+                    }
                   }}
                   className={clsx(
                     "rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-12 h-12",
