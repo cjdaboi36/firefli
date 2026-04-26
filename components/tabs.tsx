@@ -201,7 +201,7 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
       "group flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer transition-all",
       draggable && "cursor-grab active:cursor-grabbing",
       isActive
-        ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))]"
+        ? "bg-primary/10 text-primary"
         : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/50",
     );
 
@@ -466,7 +466,7 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
                     const itemClassName = clsx(
                       "group flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer transition-all",
                       isActive
-                        ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))]"
+                        ? "bg-primary/10 text-primary"
                         : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/50",
                     );
 

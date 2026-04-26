@@ -78,8 +78,8 @@ const Tooltip: FC<Props> = ({ children, orientation, tooltipText }: Props) => {
 					style={getTooltipStyle()}
 					role="tooltip"
 				>
-					<div className="relative px-3 py-1.5 bg-[color:rgb(var(--group-theme))] text-white text-sm rounded-lg whitespace-nowrap shadow-lg">
-						<div className={`${arrowClasses[orientation]} w-2.5 h-2.5 bg-[color:rgb(var(--group-theme))]`} />
+					<div className="relative px-3 py-1.5 bg-primary text-white text-sm rounded-lg whitespace-nowrap shadow-lg">
+						<div className={`${arrowClasses[orientation]} w-2.5 h-2.5 bg-primary`} />
 						{tooltipText}
 					</div>
 				</div>,

@@ -154,10 +154,10 @@ const SidebarTooltip: React.FC<{ label: string; children: React.ReactNode }> = (
               role="tooltip"
             >
               <div className="relative -translate-y-1/2">
-                <div className="px-3 py-1.5 bg-[color:rgb(var(--group-theme))] text-white text-sm rounded-lg whitespace-nowrap shadow-lg">
+                <div className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg whitespace-nowrap shadow-lg">
                   {label}
                 </div>
-                <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-[color:rgb(var(--group-theme))]"></div>
+                <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-primary"></div>
               </div>
             </div>,
             portalTarget
@@ -463,7 +463,7 @@ const Sidebar: NextPage = () => {
                         className={clsx(
                           "rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-12 h-12",
                           isActive
-                            ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))] scale-105"
+                            ? "bg-primary/10 text-primary scale-105"
                             : "text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105",
                         )}
                         aria-label={section.name}
@@ -510,7 +510,7 @@ const Sidebar: NextPage = () => {
                   className={clsx(
                     "rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-12 h-12",
                     isSettingsActive
-                      ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))] scale-105"
+                      ? "bg-primary/10 text-primary scale-105"
                       : "text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105",
                   )}
                 >

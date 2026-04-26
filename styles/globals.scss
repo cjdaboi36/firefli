@@ -50,9 +50,11 @@ html.dark {
   backface-visibility: hidden;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 * {

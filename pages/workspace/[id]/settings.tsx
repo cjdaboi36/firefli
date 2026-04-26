@@ -299,7 +299,7 @@ const Settings: pageWithLayout<Props> = ({ roles, departments, grouproles, isAdm
                       className={clsx(
                         "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                         activeSection === key
-                          ? "text-[color:rgb(var(--group-theme))] bg-[color:rgb(var(--group-theme)/0.1)]"
+                          ? "text-primary bg-primary/10"
                           : "text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700",
                       )}
                     >

@@ -928,7 +928,7 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
             onClick={() => setSortByVotes(!sortByVotes)}
             className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium border transition-all whitespace-nowrap flex-shrink-0 ${
               sortByVotes
-                ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))] border-[color:rgb(var(--group-theme)/0.3)]"
+                ? "bg-primary/10 text-primary border-primary/30"
                 : "bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
             }`}
             title={sortByVotes ? "Sorting by votes" : "Sort by votes"}
@@ -1102,7 +1102,7 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
                             onClick={() => toggleVote(rec.id)}
                             className={`flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                               hasVoted
-                                ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))]"
+                                ? "bg-primary/10 text-primary"
                                 : "bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600"
                             }`}
                           >
@@ -1358,7 +1358,7 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
                                 </div>
                                 <button
                                   onClick={() => submitComment(rec.id)}
-                                  className="p-1.5 text-primary hover:bg-[color:rgb(var(--group-theme)/0.1)] rounded-lg transition"
+                                  className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition"
                                 >
                                   <IconSend size={16} />
                                 </button>

@@ -1285,7 +1285,7 @@ const Views: pageWithLayout<pageProps> = ({
                         }}
                         className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                           selectedViewId === v.id
-                            ? "border-[color:rgb(var(--group-theme))] text-[color:rgb(var(--group-theme))] bg-[color:rgb(var(--group-theme)/0.08)] dark:bg-[color:rgb(var(--group-theme)/0.15)]"
+                            ? "border-primary text-primary bg-primary/[8%] dark:bg-primary/15"
                             : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800/50"
                         }`}
                       >
@@ -1335,7 +1335,7 @@ const Views: pageWithLayout<pageProps> = ({
                         }}
                         className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                           selectedViewId === v.id
-                            ? "border-[color:rgb(var(--group-theme))] text-[color:rgb(var(--group-theme))] bg-[color:rgb(var(--group-theme)/0.08)] dark:bg-[color:rgb(var(--group-theme)/0.15)]"
+                            ? "border-primary text-primary bg-primary/[8%] dark:bg-primary/15"
                             : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800/50"
                         }`}
                       >
@@ -1396,7 +1396,7 @@ const Views: pageWithLayout<pageProps> = ({
                         key={v.id}
                         className={`flex items-center justify-between gap-2 px-3 py-2 rounded-md ${
                           selectedViewId === v.id
-                            ? "bg-zinc-50 dark:bg-zinc-800/40 border-l-4 border-[color:rgb(var(--group-theme))]"
+                            ? "bg-zinc-50 dark:bg-zinc-800/40 border-l-4 border-primary"
                             : "hover:bg-zinc-50 dark:hover:bg-zinc-700/40"
                         }`}
                         style={{ minWidth: 0 }}
@@ -1463,7 +1463,7 @@ const Views: pageWithLayout<pageProps> = ({
                         <Popover.Button
                           className={`inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
                             open
-                              ? "bg-zinc-100 dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white ring-2 ring-[color:rgb(var(--group-theme)/0.5)]"
+                              ? "bg-zinc-100 dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white ring-2 ring-primary/50"
                               : "bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
                           }`}
                         >
@@ -1484,7 +1484,7 @@ const Views: pageWithLayout<pageProps> = ({
                             <div className="space-y-3">
                               <button
                                 onClick={newfilter}
-                                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-white bg-[color:rgb(var(--group-theme))] hover:bg-[color:rgb(var(--group-theme)/0.9)] transition-all"
+                                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary/90 transition-all"
                               >
                                 <IconPlus className="w-4 h-4" />
                                 Add Filter
@@ -1524,7 +1524,7 @@ const Views: pageWithLayout<pageProps> = ({
                         <Popover.Button
                           className={`inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
                             open
-                              ? "bg-zinc-100 dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white ring-2 ring-[color:rgb(var(--group-theme)/0.5)]"
+                              ? "bg-zinc-100 dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white ring-2 ring-primary/50"
                               : "bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
                           }`}
                         >
@@ -1608,7 +1608,7 @@ const Views: pageWithLayout<pageProps> = ({
                       type="text"
                       value={searchQuery}
                       onChange={(e) => updateSearchQuery(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-[6px] border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900/50 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[color:rgb(var(--group-theme)/0.5)] focus:border-transparent transition-all"
+                      className="block w-full pl-10 pr-3 py-[6px] border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900/50 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
                       placeholder="Search staff..."
                     />
                   </div>
@@ -1624,7 +1624,7 @@ const Views: pageWithLayout<pageProps> = ({
                               {searchQuery.trim().length >= 3 && (
                                 <button
                                   onClick={searchExternally}
-                                  className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md bg-[color:rgb(var(--group-theme))] text-white hover:opacity-90 transition-opacity"
+                                  className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-white hover:opacity-90 transition-opacity"
                                 >
                                   <IconSearch className="w-3 h-3" />
                                   Search on Roblox
@@ -1674,7 +1674,7 @@ const Views: pageWithLayout<pageProps> = ({
                             <img
                               src={u.thumbnail}
                               alt={u.username}
-                              className="w-6 h-6 rounded-full bg-[color:rgb(var(--group-theme))]"
+                              className="w-6 h-6 rounded-full bg-primary"
                             />
                             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 group-hover:text-zinc-950 dark:group-hover:text-white transition-colors">
                               {u.username}
@@ -2490,7 +2490,7 @@ const Views: pageWithLayout<pageProps> = ({
                               onClick={() => setSaveType("team")}
                               className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
                                 saveType === "team"
-                                  ? "bg-[color:rgb(var(--group-theme))] text-white border-transparent"
+                                  ? "bg-primary text-white border-transparent"
                                   : "bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                               }`}
                             >
@@ -2509,7 +2509,7 @@ const Views: pageWithLayout<pageProps> = ({
                               onClick={() => setSaveType("local")}
                               className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
                                 saveType === "local"
-                                  ? "bg-[color:rgb(var(--group-theme))] text-white border-transparent"
+                                  ? "bg-primary text-white border-transparent"
                                   : "bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                               }`}
                             >
@@ -2585,7 +2585,7 @@ const Views: pageWithLayout<pageProps> = ({
                               onMouseDown={(e) => { e.preventDefault(); setSaveColor(c); }}
                               className={`w-8 h-8 rounded-md border dark:border-zinc-600 ${
                                 saveColor === c
-                                  ? "ring-2 ring-offset-1 ring-[color:rgb(var(--group-theme))] dark:ring-white/30"
+                                  ? "ring-2 ring-offset-1 ring-primary dark:ring-white/30"
                                   : ""
                               }`}
                               style={{ background: c }}
@@ -2607,7 +2607,7 @@ const Views: pageWithLayout<pageProps> = ({
                                   onMouseDown={(e) => { e.preventDefault(); setSaveIcon(opt.key); }}
                                   className={`w-9 h-9 rounded-md flex items-center justify-center text-lg border dark:border-zinc-600 ${
                                     saveIcon === opt.key
-                                      ? "ring-2 ring-offset-1 ring-[color:rgb(var(--group-theme))] dark:ring-white/30"
+                                      ? "ring-2 ring-offset-1 ring-primary dark:ring-white/30"
                                       : ""
                                   }`}
                                 >

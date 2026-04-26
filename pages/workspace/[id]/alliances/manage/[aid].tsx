@@ -1119,8 +1119,8 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full border border-zinc-300 bg-white text-xs font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800 whitespace-nowrap self-start"
                 >
-                  <IconExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">View on Roblox</span>
+                  <IconExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 dark:text-white" />
+                  <span className="hidden sm:inline dark:text-white">View on Roblox</span>
                   <span className="sm:hidden">Roblox</span>
                 </a>
               </div>

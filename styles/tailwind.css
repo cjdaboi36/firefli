@@ -1,1 +1,13 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
+@source "../pages";
+@source "../components";
+@source "../layouts";
+
+@custom-variant dark (.dark &);
+
+@theme inline {
+  --color-firefli: #9300df;
+  --color-primary: rgb(var(--group-theme));
+}
