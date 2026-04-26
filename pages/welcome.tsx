@@ -385,7 +385,7 @@ const Login: NextPage = () => {
 					</FormProvider>
 
 					<div className="mt-7">
-						<label className="text-zinc-500 text-sm dark:text-zinc-200">Color</label>
+						<label className="text-zinc-500 text-sm dark:text-zinc-200">Colour</label>
 						<div className="grid grid-cols-10 gap-3 mt-2 mb-8">
 							{colors.map((color, i) => (
 								<button
