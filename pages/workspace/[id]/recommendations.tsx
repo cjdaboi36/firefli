@@ -601,10 +601,13 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
         {/* Settings modal */}
         {showSettings && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm sm:p-4"
             onClick={(e) => { if (e.target === e.currentTarget) setShowSettings(false); }}
           >
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+            <div className="bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-md max-h-[85vh] sm:max-h-[80vh] flex flex-col">
+              <div className="flex sm:hidden justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+              </div>
               <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-700">
                 <div>
                   <h2 className="text-base font-semibold text-zinc-900 dark:text-white">Recommendation Settings</h2>
