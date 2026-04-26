@@ -366,7 +366,7 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
           </div>
 
           <div className="space-y-4">
-            <div className="bg-zinc-50 dark:bg-zinc-800/60 p-4 rounded-lg">
+            <div className="p-4 rounded-lg">
               <label
                 htmlFor="type"
                 className="block text-sm font-medium text-zinc-700 mb-1 dark:text-white"
@@ -377,7 +377,7 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
                 id="type"
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="block w-full rounded-lg border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-600 text-zinc-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                className="block w-full rounded-lg border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
               >
                 {logbookPermissions?.note && <option value="note">Note</option>}
                 {logbookPermissions?.warning && <option value="warning">Warning</option>}
@@ -450,7 +450,7 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
                   <select
                     value={targetRank}
                     onChange={(e) => setTargetRank(e.target.value)}
-                    className="block w-full rounded-lg border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-600 text-zinc-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                    className="block w-full rounded-lg border-gray-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                   >
                     <option value="">Select a rank...</option>
                     {ranks
@@ -552,7 +552,7 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
               </div>
             )}
 
-            <div className="bg-zinc-50 dark:bg-zinc-800/60 p-4 rounded-lg">
+            <div className="p-4 rounded-lg">
               <label
                 htmlFor="note"
                 className="block text-sm font-medium text-zinc-700 dark:text-white mb-1"
@@ -565,7 +565,7 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Enter your note here..."
-                className="block w-full rounded-lg border-gray-300 dark:border-zinc-500 bg-white dark:bg-zinc-600 text-zinc-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                className="block w-full rounded-lg border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
               />
             </div>
             <button

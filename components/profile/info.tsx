@@ -130,10 +130,6 @@ export function InformationPanel({ user, isUser, isAdmin }: InformationPanelProp
             <div className="bg-firefli/10 rounded-lg p-3">
               <IconUser className="w-6 h-6 text-firefli" />
             </div>
-            <div>
-              <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Information</h2>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Overview and member-specific details</p>
-            </div>
           </div>
         </div>
 

@@ -1188,7 +1188,6 @@ const Profile: pageWithLayout<pageProps> = ({
                         return (
                           <div
                             className="flex-shrink-0"
-                            title={`On notice: ${activeNotice.reason || "N/A"}`}
                           >
                             <IconBeach className="w-5 h-5 text-amber-500" />
                           </div>
@@ -1201,7 +1200,6 @@ const Profile: pageWithLayout<pageProps> = ({
                         return (
                           <div
                             className="flex-shrink-0"
-                            title={`Upcoming notice (starts ${new Date(upcomingNotice.startTime).toLocaleDateString()})`}
                           >
                             <IconBeach className="w-5 h-5 text-emerald-500" />
                           </div>
@@ -1214,7 +1212,6 @@ const Profile: pageWithLayout<pageProps> = ({
                         return (
                           <div
                             className="flex-shrink-0"
-                            title={`Previous notice (ended ${new Date(pastNotice.endTime).toLocaleDateString()})`}
                           >
                             <IconBeach className="w-5 h-5 text-zinc-400" />
                           </div>
@@ -1287,7 +1284,7 @@ const Profile: pageWithLayout<pageProps> = ({
               <Tab.List className="flex border-b border-zinc-200 dark:border-zinc-700 mx-2 sm:mx-4 mt-3 mb-2 overflow-x-auto scrollbar-hide">
                 <Tab
                   className={({ selected }) =>
-                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
+                    `flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                       selected
                         ? "border-primary text-primary"
                         : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1295,11 +1292,11 @@ const Profile: pageWithLayout<pageProps> = ({
                   }
                 >
                   <IconClipboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Details</span>
+                  <span>Details</span>
                 </Tab>
                 <Tab
                   className={({ selected }) =>
-                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
+                    `flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                       selected
                         ? "border-primary text-primary"
                         : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1307,12 +1304,12 @@ const Profile: pageWithLayout<pageProps> = ({
                   }
                 >
                   <IconHistory className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Activity</span>
+                  <span>Activity</span>
                 </Tab>
                 {logbookEnabled && (
                   <Tab
                     className={({ selected }) =>
-                      `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
+                      `flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                         selected
                           ? "border-primary text-primary"
                           : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1320,12 +1317,12 @@ const Profile: pageWithLayout<pageProps> = ({
                     }
                   >
                     <IconBook className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline">Logbook</span>
+                    <span>Logbook</span>
                   </Tab>
                 )}
                 <Tab
                   className={({ selected }) =>
-                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
+                    `flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                       selected
                         ? "border-primary text-primary"
                         : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1333,7 +1330,7 @@ const Profile: pageWithLayout<pageProps> = ({
                   }
                 >
                   <IconCalendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Notices</span>
+                  <span>Notices</span>
                 </Tab>
               </Tab.List>
               <Tab.Panels className="p-3 sm:p-4 bg-white dark:bg-zinc-800 rounded-b-xl">
