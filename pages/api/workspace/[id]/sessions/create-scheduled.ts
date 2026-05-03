@@ -107,16 +107,6 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const userRole = user?.roles?.[0];
   const requiredPermission = `sessions_${type}_scheduled`;
 
-  console.log('[create-scheduled] Debug:', {
-    userId: userId.toString(),
-    type,
-    requiredPermission,
-    isAdmin,
-    hasRole: !!userRole,
-    permissions: userRole?.permissions || [],
-    hasPermission: userRole?.permissions.includes(requiredPermission)
-  });
-
   if (!isAdmin && (!userRole || !userRole.permissions.includes(requiredPermission))) {
     return res.status(403).json({ 
       success: false, 
