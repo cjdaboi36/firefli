@@ -222,20 +222,22 @@ const SessionModal: React.FC<SessionModalProps> = ({
 
   useEffect(() => {
     const fetchGameThumbnail = async () => {
-      const gameId = session.sessionType?.gameId;
-      if (!gameId) return;
+      const placeId = session.sessionType?.gameId;
+      if (!placeId || !workspaceId) {
+        setGameThumbnail(null);
+        return;
+      }
       try {
         const res = await axios.get(
-          `https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${gameId}&size=768x432&format=Png&isCircular=false`
+          `/api/workspace/${workspaceId}/sessions/game-thumbnail?placeId=${placeId}`
         );
-        const thumbnailUrl = res.data?.data?.[0]?.thumbnails?.[0]?.imageUrl;
-        if (thumbnailUrl) setGameThumbnail(thumbnailUrl);
+        setGameThumbnail(res.data?.thumbnailUrl || null);
       } catch {
-        // 
+        setGameThumbnail(null);
       }
     };
     if (isOpen) fetchGameThumbnail();
-  }, [isOpen, session.sessionType?.gameId]);
+  }, [isOpen, session.sessionType?.gameId, workspaceId]);
 
   const handleTagAssignment = async (tagId: string | null) => {
     try {
