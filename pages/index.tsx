@@ -222,13 +222,7 @@ const Home: NextPage = () => {
                   : "You don't have permission to create workspaces"}
               </p>
               {canCreateWorkspace ? (
-                <Button
-                  onClick={() => router.push('/welcome')}
-                  classoverride="flex items-center"
-                >
-                  <IconPlus className="mr-2 h-5 w-5" />
-                  Create Workspace
-                </Button>
+                <p></p>
               ) : (
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   Contact an administrator if you need to create a workspace
