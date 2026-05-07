@@ -34,7 +34,7 @@ const Notices: FC<Props> = ({ notices, canManageNotices = false, canApproveNotic
     holiday: "Holiday",
     sickness: "Sickness", 
     personal: "Personal",
-    school: "School",
+    school: "Education",
     other: "Other",
   };
 
@@ -213,7 +213,7 @@ const Notices: FC<Props> = ({ notices, canManageNotices = false, canApproveNotic
                 <button
                   onClick={() => {
                     setSelectedType("school");
-                    setReason("School");
+                    setReason("Education");
                   }}
                   className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 sm:gap-2 ${
                     selectedType === "school"
@@ -222,7 +222,7 @@ const Notices: FC<Props> = ({ notices, canManageNotices = false, canApproveNotic
                   }`}
                 >
                   <IconBook className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-600 dark:text-zinc-400" />
-                  School
+                  Education
                 </button>
 
                 <button

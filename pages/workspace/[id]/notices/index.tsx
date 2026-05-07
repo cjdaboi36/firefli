@@ -288,7 +288,7 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
     holiday: "Holiday",
     sickness: "Sickness",
     personal: "Personal",
-    school: "School",
+    school: "Education",
     other: "Other",
   };
 
@@ -685,7 +685,7 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                     <button
                       onClick={() => {
                         setSelectedType("school");
-                        setReason("School");
+                        setReason("Education");
                       }}
                       className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                         selectedType === "school"
@@ -694,7 +694,7 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                       }`}
                     >
                       <IconBook className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-                      <span className="hidden sm:inline">School</span>
+                      <span className="hidden sm:inline">Education</span>
                     </button>
 
                     <button
