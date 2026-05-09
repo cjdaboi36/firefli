@@ -31,11 +31,11 @@ const sessionOptions: SessionOptions = {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 1,
+    maxAge: 60 * 60 * 24 * 7,
     path: '/',
     domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
   },
-  ttl: 60 * 60 * 24 * 1,
+  ttl: 60 * 60 * 24 * 7,
 };
 
 export function withSessionRoute(handler: NextApiHandler) {
