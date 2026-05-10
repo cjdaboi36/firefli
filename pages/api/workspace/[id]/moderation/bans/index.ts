@@ -23,10 +23,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           workspaceGroupId: groupId,
           userId: targetUserId,
           active: true,
-          OR: [
-            { expiresAt: null },
-            { expiresAt: { gt: new Date() } },
-          ],
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
         },
         include: {
           workspace: {
@@ -57,12 +54,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             duration: activeBan.duration,
           }
         : user?.banned
-        ? {
-            reason: user.banReason,
-            bannedAt: user.bannedAt,
-            isPermanent: true,
-          }
-        : null;
+          ? {
+              reason: user.banReason,
+              bannedAt: user.bannedAt,
+              isPermanent: true,
+            }
+          : null;
 
       return res.status(200).json({
         success: true,
@@ -83,14 +80,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "POST") {
     try {
-      const {
-        userId,
-        username,
-        reason,
-        duration,
-        isPermanent = false,
-        caseId,
-      } = req.body;
+const {
+  userId,
+  username,
+  reason,
+  duration,
+  expiresAt: providedExpiresAt,
+  isPermanent = false,
+  caseId,
+} = req.body;
+
+const finalExpiresAt = isPermanent
+  ? null
+  : providedExpiresAt
+    ? new Date(providedExpiresAt)
+    : duration
+      ? new Date(Date.now() + Number(duration) * 1000)
+      : null;
+
+const finalDuration =
+  !isPermanent && finalExpiresAt
+    ? Math.max(0, Math.floor((finalExpiresAt.getTime() - Date.now()) / 1000))
+    : null;
 
       if (!userId || !reason) {
         return res.status(400).json({
@@ -100,9 +111,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
 
       const targetUserId = BigInt(userId);
-      const expiresAt = !isPermanent && duration
-        ? new Date(Date.now() + duration * 1000)
-        : null;
       const ban = await prisma.playerBan.create({
         data: {
           workspaceGroupId: groupId,
@@ -110,22 +118,32 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           reason,
           bannedById: req.session.userid!,
           active: true,
-          duration,
-          expiresAt,
+          duration: finalDuration,
+          expiresAt: finalExpiresAt,
         },
       });
 
       if (caseId) {
+        const existingCase = await prisma.moderationCase.findFirst({
+          where: {
+            id: caseId,
+            workspaceGroupId: groupId,
+          },
+          select: {
+            action: true,
+          },
+        });
         await prisma.moderationCase.update({
           where: { id: caseId },
           data: {
             status: "resolved",
-            action: "ban",
+            action:
+              existingCase?.action || (isPermanent ? "perm_ban" : "temp_ban"),
             resolvedAt: new Date(),
             resolvedBy: req.session.userid!,
-            expiresAt,
             isPermanent,
-            banDuration: duration,
+            expiresAt: finalExpiresAt,
+            banDuration: finalDuration,
           },
         });
       }
@@ -141,9 +159,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           details: {
             banId: ban.id,
             reason,
-            duration,
+            duration: finalDuration,
             isPermanent,
-            expiresAt,
+            expiresAt: finalExpiresAt,
           },
         },
       });
@@ -176,6 +194,6 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     return handler(req, res);
   }
-  
+
   return withPermissionCheck(handler, ["execute_punishments"])(req, res);
 }

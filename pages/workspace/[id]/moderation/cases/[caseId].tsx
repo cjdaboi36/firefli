@@ -29,10 +29,14 @@ import {
 
 const STATUS_COLORS: Record<string, string> = {
   open: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800",
-  resolved: "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-600",
-  archived: "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-600",
-  appealed: "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800",
-  revoked: "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800",
+  resolved:
+    "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-600",
+  archived:
+    "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-600",
+  appealed:
+    "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800",
+  revoked:
+    "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800",
 };
 
 interface CaseData {
@@ -223,13 +227,13 @@ export const getServerSideProps = withPermissionCheckSsr(
         props: {
           case: JSON.parse(
             JSON.stringify(moderationCase, (_, value) =>
-              typeof value === "bigint" ? value.toString() : value
-            )
+              typeof value === "bigint" ? value.toString() : value,
+            ),
           ),
           logs: JSON.parse(
             JSON.stringify(logs, (_, value) =>
-              typeof value === "bigint" ? value.toString() : value
-            )
+              typeof value === "bigint" ? value.toString() : value,
+            ),
           ),
         },
       };
@@ -238,10 +242,13 @@ export const getServerSideProps = withPermissionCheckSsr(
       return { notFound: true };
     }
   },
-  ["view_moderation"]
+  ["view_moderation"],
 );
 
-const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs }) => {
+const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
+  case: caseData,
+  logs,
+}) => {
   const router = useRouter();
   const { id: workspaceId, caseId } = router.query;
   const workspaceData = useRecoilValue(workspacestate);
@@ -255,30 +262,36 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [evidenceDescription, setEvidenceDescription] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadType, setUploadType] = useState<'file' | 'link'>('file');
+  const [uploadType, setUploadType] = useState<"file" | "link">("file");
   const [videoLink, setVideoLink] = useState("");
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewEvidence, setPreviewEvidence] = useState<any>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [evidenceToDelete, setEvidenceToDelete] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
-
-  // Check permissions
-  const canExecutePunishments = workspaceData.yourPermission?.includes("execute_punishments") || workspaceData.isAdmin;
-  const canRevokePunishments = workspaceData.yourPermission?.includes("revoke_punishments") || workspaceData.isAdmin;
-  const canEditCase = workspaceData.yourPermission?.includes("edit_moderation_cases") || workspaceData.isAdmin || caseData.createdBy === userState.userId?.toString();
-
+  const canExecutePunishments =
+    workspaceData.yourPermission?.includes("execute_punishments") ||
+    workspaceData.isAdmin;
+  const canRevokePunishments =
+    workspaceData.yourPermission?.includes("revoke_punishments") ||
+    workspaceData.isAdmin;
+  const canEditCase =
+    workspaceData.yourPermission?.includes("edit_moderation_cases") ||
+    workspaceData.isAdmin ||
+    caseData.createdBy === userState.userId?.toString();
+  const isBanAction =
+    caseData.action === "temp_ban" || caseData.action === "perm_ban";
+  const isKickAction = caseData.action === "kick";
   const validateVideoLink = (url: string): boolean => {
     const patterns = [
       /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+$/,
       /^https?:\/\/medal\.tv\/.+$/,
       /^https?:\/\/drive\.google\.com\/.+$/,
     ];
-    return patterns.some(pattern => pattern.test(url));
+    return patterns.some((pattern) => pattern.test(url));
   };
-
   const handleUploadEvidence = async () => {
-    if (uploadType === 'file') {
+    if (uploadType === "file") {
       if (!evidenceFile) {
         toast.error("Please select a file");
         return;
@@ -289,14 +302,16 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
         return;
       }
       if (!validateVideoLink(videoLink)) {
-        toast.error("Invalid video link. Please use YouTube, Medal.tv, or Google Drive.");
+        toast.error(
+          "Invalid video link. Please use YouTube, Medal.tv, or Google Drive.",
+        );
         return;
       }
     }
 
     setUploadingEvidence(true);
     try {
-      if (uploadType === 'link') {
+      if (uploadType === "link") {
         // For video links, send as external URL
         const response = await axios.post(
           `/api/workspace/${workspaceId}/moderation/cases/${caseId}/evidence`,
@@ -305,7 +320,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
             fileUrl: videoLink,
             isExternalLink: true,
             description: evidenceDescription,
-          }
+          },
         );
 
         if (response.data.success) {
@@ -313,7 +328,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
           setShowEvidenceModal(false);
           setVideoLink("");
           setEvidenceDescription("");
-          setUploadType('file');
+          setUploadType("file");
           router.replace(router.asPath);
         } else {
           toast.error(response.data.error || "Failed to add video link");
@@ -330,7 +345,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                 fileName: evidenceFile!.name,
                 fileData: base64,
                 description: evidenceDescription,
-              }
+              },
             );
 
             if (response.data.success) {
@@ -343,7 +358,8 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
               toast.error(response.data.error || "Failed to upload evidence");
             }
           } catch (uploadError: any) {
-            const errorMessage = uploadError.response?.data?.error || "Failed to upload evidence";
+            const errorMessage =
+              uploadError.response?.data?.error || "Failed to upload evidence";
             toast.error(errorMessage);
           } finally {
             setUploadingEvidence(false);
@@ -356,7 +372,8 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
         reader.readAsDataURL(evidenceFile!);
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || "Failed to upload evidence";
+      const errorMessage =
+        error.response?.data?.error || "Failed to upload evidence";
       toast.error(errorMessage);
       setUploadingEvidence(false);
     }
@@ -378,8 +395,8 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      const allowedTypes = ['image/', 'video/'];
-      if (allowedTypes.some(type => file.type.startsWith(type))) {
+      const allowedTypes = ["image/", "video/"];
+      if (allowedTypes.some((type) => file.type.startsWith(type))) {
         setEvidenceFile(file);
       } else {
         toast.error("Invalid file type. Please upload an image, or video.");
@@ -399,7 +416,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
     try {
       const response = await axios.put(
         `/api/workspace/${workspaceId}/moderation/cases/${caseId}`,
-        { status }
+        { status },
       );
 
       if (response.data.success) {
@@ -422,9 +439,10 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
           username: caseData.targetUsername,
           reason: caseData.reason,
           duration: caseData.banDuration,
-          isPermanent: caseData.isPermanent,
-          caseId: caseId,
-        }
+          expiresAt: caseData.expiresAt,
+          isPermanent: caseData.action === "perm_ban",
+          caseId,
+        },
       );
 
       if (response.data.success) {
@@ -446,7 +464,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
     try {
       const response = await axios.post(
         `/api/workspace/${workspaceId}/moderation/cases/${caseId}/revoke`,
-        { reason: revokeReason }
+        { reason: revokeReason },
       );
 
       if (response.data.success) {
@@ -468,7 +486,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
     setDeleting(true);
     try {
       const response = await axios.delete(
-        `/api/workspace/${workspaceId}/moderation/cases/${caseId}/evidence/${evidenceToDelete.id}`
+        `/api/workspace/${workspaceId}/moderation/cases/${caseId}/evidence/${evidenceToDelete.id}`,
       );
 
       if (response.data.success) {
@@ -480,7 +498,8 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
         toast.error(response.data.error || "Failed to delete evidence");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || "Failed to delete evidence";
+      const errorMessage =
+        error.response?.data?.error || "Failed to delete evidence";
       toast.error(errorMessage);
     } finally {
       setDeleting(false);
@@ -512,7 +531,10 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
           </div>
           <div className="flex gap-2">
             {caseData.action && !caseData.revokedAt && canRevokePunishments && (
-              <Tooltip orientation="bottom" tooltipText="Revoke this case action">
+              <Tooltip
+                orientation="bottom"
+                tooltipText="Revoke this case action"
+              >
                 <button
                   onClick={() => setShowRevokeModal(true)}
                   className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
@@ -522,33 +544,41 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                 </button>
               </Tooltip>
             )}
-            {caseData.status === "open" && (
-              <>
-                {canExecutePunishments && (
-                  <Tooltip orientation="bottom" tooltipText="Execute the ban for this user">
-                    <button
-                      onClick={handleExecuteBan}
-                      className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+            {caseData.status === "open" &&
+              canExecutePunishments &&
+              !caseData.revokedAt && (
+                <>
+                  {isBanAction && (
+                    <Tooltip
+                      orientation="bottom"
+                      tooltipText="Execute the ban for this user"
                     >
-                      <IconBan size={18} />
-                      <span className="hidden sm:inline">Execute Ban</span>
-                    </button>
-                  </Tooltip>
-                )}
-                {canEditCase && (
-                  <Tooltip orientation="bottom" tooltipText="Mark this case as resolved">
-                    <button
-                      onClick={() => handleUpdateStatus("resolved")}
-                      disabled={updating}
-                      className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                      <button
+                        onClick={handleExecuteBan}
+                        className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+                      >
+                        <IconBan size={18} />
+                        <span className="hidden sm:inline">Execute Ban</span>
+                      </button>
+                    </Tooltip>
+                  )}
+
+                  {isKickAction && (
+                    <Tooltip
+                      orientation="bottom"
+                      tooltipText="Mark this kick as executed"
                     >
-                      <IconCheck size={18} />
-                      <span className="hidden sm:inline">Mark Resolved</span>
-                    </button>
-                  </Tooltip>
-                )}
-              </>
-            )}
+                      <button
+                        onClick={() => handleUpdateStatus("resolved")}
+                        className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+                      >
+                        <IconAlertTriangle size={18} />
+                        <span className="hidden sm:inline">Execute Kick</span>
+                      </button>
+                    </Tooltip>
+                  )}
+                </>
+              )}
           </div>
         </div>
       </div>
@@ -558,7 +588,9 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
         <div className="lg:col-span-2 space-y-6">
           {/* Case Info */}
           <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">Case Information</h2>
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">
+              Case Information
+            </h2>
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <img
@@ -582,22 +614,33 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
               </div>
 
               <div>
-                <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">Status</div>
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${
-                      STATUS_COLORS[caseData.status] || "bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white"
-                    }`}
-                  >
-                    {caseData.status.charAt(0).toUpperCase() + caseData.status.slice(1)}
-                  </span>              </div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">
+                  Status
+                </div>
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${
+                    STATUS_COLORS[caseData.status] ||
+                    "bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white"
+                  }`}
+                >
+                  {caseData.status.charAt(0).toUpperCase() +
+                    caseData.status.slice(1)}
+                </span>{" "}
+              </div>
               <div>
-                <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">Reason</div>
-                <div className="text-lg text-zinc-900 dark:text-white">{caseData.reason}</div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">
+                  Reason
+                </div>
+                <div className="text-lg text-zinc-900 dark:text-white">
+                  {caseData.reason}
+                </div>
               </div>
 
               {caseData.description && (
                 <div>
-                  <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">Description</div>
+                  <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">
+                    Description
+                  </div>
                   <div className="text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
                     {caseData.description}
                   </div>
@@ -606,9 +649,13 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
 
               {caseData.action && (
                 <div>
-                  <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">Planned Action</div>
+                  <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">
+                    Planned Action
+                  </div>
                   <div className="text-lg text-zinc-900 dark:text-white">
-                    {caseData.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    {caseData.action
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (l) => l.toUpperCase())}
                   </div>
                 </div>
               )}
@@ -629,7 +676,9 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
           {/* Evidence */}
           <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Evidence</h2>
+              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
+                Evidence
+              </h2>
               <button
                 onClick={() => setShowEvidenceModal(true)}
                 disabled={uploadingEvidence}
@@ -647,15 +696,16 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
             ) : (
               <div className="space-y-3">
                 {caseData.evidence.map((ev: any) => {
-                  const isExternalLink = ev.fileType === 'external_link';
-                  const isImage = ev.fileType?.startsWith('image/');
-                  const isVideo = ev.fileType?.startsWith('video/');
+                  const isExternalLink = ev.fileType === "external_link";
+                  const isImage = ev.fileType?.startsWith("image/");
+                  const isVideo = ev.fileType?.startsWith("video/");
                   const canPreview = isImage || isVideo || isExternalLink;
-                  
+
                   // Check if user can delete this evidence
-                  const isUploader = ev.uploadedBy?.toString() === userState.userId?.toString();
+                  const isUploader =
+                    ev.uploadedBy?.toString() === userState.userId?.toString();
                   const canDeleteEvidence = isUploader || canEditCase;
-                  
+
                   return (
                     <div
                       key={ev.id}
@@ -665,13 +715,22 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                         {isExternalLink ? (
                           <IconLink className="text-primary" size={24} />
                         ) : (
-                          <IconFileText className="text-zinc-400 dark:text-zinc-500" size={24} />
+                          <IconFileText
+                            className="text-zinc-400 dark:text-zinc-500"
+                            size={24}
+                          />
                         )}
                         <div>
-                          <div className="font-medium text-zinc-900 dark:text-white">{ev.fileName}</div>
+                          <div className="font-medium text-zinc-900 dark:text-white">
+                            {ev.fileName}
+                          </div>
                           <div className="text-xs text-zinc-500 dark:text-zinc-400">
                             {isExternalLink ? (
-                              <>External Link • {moment(ev.createdAt).format("MMM D, YYYY")} • {ev.uploader?.username}</>
+                              <>
+                                External Link •{" "}
+                                {moment(ev.createdAt).format("MMM D, YYYY")} •{" "}
+                                {ev.uploader?.username}
+                              </>
                             ) : (
                               <>
                                 {(ev.fileSize / 1024).toFixed(1)} KB •{" "}
@@ -738,7 +797,9 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
         <div className="space-y-6">
           {/* Timestamps */}
           <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm p-4">
-            <h3 className="font-bold text-zinc-900 dark:text-white mb-3">Timestamps</h3>
+            <h3 className="font-bold text-zinc-900 dark:text-white mb-3">
+              Timestamps
+            </h3>
             <div className="space-y-2 text-sm">
               <div>
                 <div className="text-zinc-500 dark:text-zinc-400">Created</div>
@@ -748,17 +809,25 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
               </div>
               {caseData.resolvedAt && (
                 <div>
-                  <div className="text-zinc-500 dark:text-zinc-400">Resolved</div>
+                  <div className="text-zinc-500 dark:text-zinc-400">
+                    Resolved
+                  </div>
                   <div className="font-medium text-zinc-900 dark:text-white">
-                    {moment(caseData.resolvedAt).format("MMM D, YYYY [at] h:mm A")}
+                    {moment(caseData.resolvedAt).format(
+                      "MMM D, YYYY [at] h:mm A",
+                    )}
                   </div>
                 </div>
               )}
               {caseData.expiresAt && (
                 <div>
-                  <div className="text-zinc-500 dark:text-zinc-400">Expires</div>
+                  <div className="text-zinc-500 dark:text-zinc-400">
+                    Expires
+                  </div>
                   <div className="font-medium text-zinc-900 dark:text-white">
-                    {moment(caseData.expiresAt).format("MMM D, YYYY [at] h:mm A")}
+                    {moment(caseData.expiresAt).format(
+                      "MMM D, YYYY [at] h:mm A",
+                    )}
                   </div>
                 </div>
               )}
@@ -767,10 +836,14 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
 
           {/* Staff */}
           <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm p-4">
-            <h3 className="font-bold text-zinc-900 dark:text-white mb-3">Staff</h3>
+            <h3 className="font-bold text-zinc-900 dark:text-white mb-3">
+              Staff
+            </h3>
             <div className="space-y-3 text-sm">
               <div>
-                <div className="text-zinc-500 dark:text-zinc-400 mb-1">Created By</div>
+                <div className="text-zinc-500 dark:text-zinc-400 mb-1">
+                  Created By
+                </div>
                 <div className="flex items-center gap-2">
                   <img
                     src={
@@ -787,7 +860,9 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
               </div>
               {caseData.resolvedByUser && (
                 <div>
-                  <div className="text-zinc-500 dark:text-zinc-400 mb-1">Resolved By</div>
+                  <div className="text-zinc-500 dark:text-zinc-400 mb-1">
+                    Resolved By
+                  </div>
                   <div className="flex items-center gap-2">
                     <img
                       src={
@@ -806,37 +881,54 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
             </div>
           </div>
 
-          {/* Ban Info */}
-          {(caseData.action === "temp_ban" || caseData.action === "perm_ban") && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-              <h3 className="font-bold text-red-900 dark:text-red-300 mb-2">Ban Details</h3>
-              <div className="space-y-2 text-sm text-red-800 dark:text-red-200">
-                <div>
-                  Type:{" "}
-                  {caseData.action === "perm_ban" ? "Permanent Ban" : "Temporary Ban"}
-                </div>
-                {caseData.expiresAt && (
-                  <div>Expires: {moment(caseData.expiresAt).format("MMM D, YYYY [at] h:mm A")} ({moment(caseData.expiresAt).fromNow()})</div>
-                )}
-              </div>
-            </div>
-          )}
+          {!caseData.revokedAt &&
+            (caseData.action === "temp_ban" ||
+              caseData.action === "perm_ban") && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                <h3 className="font-bold text-red-900 dark:text-red-300 mb-2">
+                  Ban Details
+                </h3>
 
-          {/* Revoke Info */}
+                <div className="space-y-2 text-sm text-red-800 dark:text-red-200">
+                  <div>
+                    Type:{" "}
+                    {caseData.action === "perm_ban"
+                      ? "Permanent Ban"
+                      : "Temporary Ban"}
+                  </div>
+
+                  {caseData.expiresAt && (
+                    <div>
+                      Expires:{" "}
+                      {moment(caseData.expiresAt).format(
+                        "MMM D, YYYY [at] h:mm A",
+                      )}{" "}
+                      ({moment(caseData.expiresAt).fromNow()})
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
           {caseData.revokedAt && (
             <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4">
-              <h3 className="font-bold text-orange-900 dark:text-orange-300 mb-2">Action Revoked</h3>
+              <h3 className="font-bold text-orange-900 dark:text-orange-300 mb-2">
+                Action Revoked
+              </h3>
               <div className="space-y-2 text-sm text-orange-800 dark:text-orange-200">
                 <div>
                   Revoked by: {caseData.revokedByUser?.username || "Unknown"}
                 </div>
                 <div>
-                  Revoked at: {moment(caseData.revokedAt).format("MMM D, YYYY [at] h:mm A")}
+                  Revoked at:{" "}
+                  {moment(caseData.revokedAt).format("MMM D, YYYY [at] h:mm A")}
                 </div>
                 {caseData.revokeReason && (
                   <div>
                     <div className="font-medium mb-1">Reason:</div>
-                    <div className="whitespace-pre-wrap">{caseData.revokeReason}</div>
+                    <div className="whitespace-pre-wrap">
+                      {caseData.revokeReason}
+                    </div>
                   </div>
                 )}
               </div>
@@ -845,13 +937,15 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
         </div>
       </div>
 
-      {/* Revoke Modal */}
       {showRevokeModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl border border-white/10">
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Revoke Action</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
+              Revoke Action
+            </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-              This will revoke the action for this case. Please provide a reason for the revocation.
+              This will revoke the action for this case. Please provide a reason
+              for the revocation.
             </p>
             <div className="space-y-4">
               <div>
@@ -890,42 +984,42 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
         </div>
       )}
 
-      {/* Evidence Upload Modal */}
       {showEvidenceModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl border border-white/10">
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Add Evidence</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
+              Add Evidence
+            </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
               Upload and evidence videos or images.
             </p>
-            
+
             {/* Tab Switcher */}
             <div className="flex gap-2 mb-4 bg-zinc-100 dark:bg-zinc-700/50 p-1 rounded-lg">
               <button
-                onClick={() => setUploadType('file')}
+                onClick={() => setUploadType("file")}
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  uploadType === 'file'
-                    ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  uploadType === "file"
+                    ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                 }`}
               >
                 Upload File
               </button>
               <button
-                onClick={() => setUploadType('link')}
+                onClick={() => setUploadType("link")}
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  uploadType === 'link'
-                    ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  uploadType === "link"
+                    ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                 }`}
               >
                 Video Link
               </button>
             </div>
-            
+
             <div className="space-y-4">
-              {uploadType === 'file' ? (
-                /* File Upload */
+              {uploadType === "file" ? (
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -938,7 +1032,10 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                 >
                   {evidenceFile ? (
                     <div className="space-y-2">
-                      <IconFileText className="mx-auto text-primary" size={48} />
+                      <IconFileText
+                        className="mx-auto text-primary"
+                        size={48}
+                      />
                       <div className="font-medium text-zinc-900 dark:text-white">
                         {evidenceFile.name}
                       </div>
@@ -954,7 +1051,10 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <IconUpload className="mx-auto text-zinc-400 dark:text-zinc-500" size={48} />
+                      <IconUpload
+                        className="mx-auto text-zinc-400 dark:text-zinc-500"
+                        size={48}
+                      />
                       <div className="text-zinc-900 dark:text-white font-medium">
                         Drag and drop your file here
                       </div>
@@ -981,7 +1081,6 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                   )}
                 </div>
               ) : (
-                /* Video Link */
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                     Video URL <span className="text-red-500">*</span>
@@ -999,7 +1098,6 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                 </div>
               )}
 
-              {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                   Description <span className="text-zinc-400">(Optional)</span>
@@ -1017,10 +1115,19 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleUploadEvidence}
-                disabled={uploadingEvidence || (uploadType === 'file' ? !evidenceFile : !videoLink.trim())}
+                disabled={
+                  uploadingEvidence ||
+                  (uploadType === "file" ? !evidenceFile : !videoLink.trim())
+                }
                 className="flex-1 bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {uploadingEvidence ? (uploadType === 'file' ? "Uploading..." : "Adding...") : (uploadType === 'file' ? "Upload Evidence" : "Add Video Link")}
+                {uploadingEvidence
+                  ? uploadType === "file"
+                    ? "Uploading..."
+                    : "Adding..."
+                  : uploadType === "file"
+                    ? "Upload Evidence"
+                    : "Add Video Link"}
               </button>
               <button
                 onClick={() => {
@@ -1029,7 +1136,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                   setEvidenceDescription("");
                   setVideoLink("");
                   setIsDragging(false);
-                  setUploadType('file');
+                  setUploadType("file");
                 }}
                 disabled={uploadingEvidence}
                 className="px-6 bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white py-2.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors font-medium disabled:opacity-50"
@@ -1041,7 +1148,6 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
         </div>
       )}
 
-      {/* Evidence Preview Modal */}
       {showPreviewModal && previewEvidence && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="relative max-w-6xl w-full mx-4">
@@ -1054,20 +1160,26 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
             >
               <IconX size={24} />
             </button>
-            
+
             <div className="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-xl border border-white/10 max-h-[90vh] flex flex-col">
               <div className="p-4 border-b border-zinc-200 dark:border-zinc-700">
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">{previewEvidence.fileName}</h2>
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
+                  {previewEvidence.fileName}
+                </h2>
                 {previewEvidence.description && (
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{previewEvidence.description}</p>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                    {previewEvidence.description}
+                  </p>
                 )}
               </div>
-              
+
               <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-zinc-50 dark:bg-zinc-900/50">
-                {previewEvidence.fileType === 'external_link' ? (
+                {previewEvidence.fileType === "external_link" ? (
                   <div className="text-center">
                     <IconLink className="mx-auto mb-4 text-primary" size={48} />
-                    <p className="text-zinc-600 dark:text-zinc-400 mb-4">External video link</p>
+                    <p className="text-zinc-600 dark:text-zinc-400 mb-4">
+                      External video link
+                    </p>
                     <a
                       href={previewEvidence.fileUrl}
                       target="_blank"
@@ -1078,13 +1190,13 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                       Open Video Link
                     </a>
                   </div>
-                ) : previewEvidence.fileType?.startsWith('image/') ? (
+                ) : previewEvidence.fileType?.startsWith("image/") ? (
                   <img
                     src={previewEvidence.fileUrl}
                     alt={previewEvidence.fileName}
                     className="max-w-full max-h-full object-contain rounded-lg"
                   />
-                ) : previewEvidence.fileType?.startsWith('video/') ? (
+                ) : previewEvidence.fileType?.startsWith("video/") ? (
                   <video
                     src={previewEvidence.fileUrl}
                     controls
@@ -1099,17 +1211,16 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
                   </div>
                 )}
               </div>
-              
+
               <div className="p-4 border-t border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
                 <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {previewEvidence.fileType !== 'external_link' && (
-                    <>
-                      {(previewEvidence.fileSize / 1024).toFixed(1)} KB •{" "}
-                    </>
+                  {previewEvidence.fileType !== "external_link" && (
+                    <>{(previewEvidence.fileSize / 1024).toFixed(1)} KB • </>
                   )}
-                  Uploaded by {previewEvidence.uploader?.username} on {moment(previewEvidence.createdAt).format("MMM D, YYYY")}
+                  Uploaded by {previewEvidence.uploader?.username} on{" "}
+                  {moment(previewEvidence.createdAt).format("MMM D, YYYY")}
                 </div>
-                {previewEvidence.fileType !== 'external_link' && (
+                {previewEvidence.fileType !== "external_link" && (
                   <a
                     href={previewEvidence.fileUrl}
                     download
@@ -1125,23 +1236,32 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({ case: caseData, logs 
         </div>
       )}
 
-      {/* Delete Evidence Confirmation Modal */}
       {showDeleteModal && evidenceToDelete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl border border-white/10">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg">
-                <IconTrash className="text-red-600 dark:text-red-400" size={24} />
+                <IconTrash
+                  className="text-red-600 dark:text-red-400"
+                  size={24}
+                />
               </div>
-              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">Delete Evidence</h2>
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">
+                Delete Evidence
+              </h2>
             </div>
             <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-              Are you sure you want to delete this evidence? This action cannot be undone.
+              Are you sure you want to delete this evidence? This action cannot
+              be undone.
             </p>
             <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 mb-6">
-              <div className="font-medium text-zinc-900 dark:text-white mb-1">{evidenceToDelete.fileName}</div>
+              <div className="font-medium text-zinc-900 dark:text-white mb-1">
+                {evidenceToDelete.fileName}
+              </div>
               {evidenceToDelete.description && (
-                <div className="text-sm text-zinc-600 dark:text-zinc-400">{evidenceToDelete.description}</div>
+                <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                  {evidenceToDelete.description}
+                </div>
               )}
             </div>
             <div className="flex gap-3">

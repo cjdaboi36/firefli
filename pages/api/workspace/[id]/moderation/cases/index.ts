@@ -126,12 +126,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         });
       }
 
-	  const allowedActions = ["kick", "temp_ban", "perm_ban"];
+	  const allowedActions = ["warning", "kick", "temp_ban", "perm_ban"];
 
 		if (!action || !allowedActions.includes(action)) {
 		return res.status(400).json({
 			success: false,
-			error: "Invalid action. Must be kick, temp_ban, or perm_ban",
+			error: "Invalid action. Must be warning, kick, or ban.",
 		});
 		}
 

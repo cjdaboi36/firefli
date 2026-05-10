@@ -120,10 +120,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         });
       }
 
-      const isAuthor = existingCase.createdBy === req.session.userId!;
+      const isAuthor = existingCase.createdBy === req.session.userid!;
       const user = await prisma.user.findFirst({
         where: {
-          userid: req.session.userId!,
+          userid: req.session.userid!,
         },
         include: {
           roles: {
@@ -163,7 +163,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (expiresAt !== undefined) updateData.expiresAt = expiresAt ? new Date(expiresAt) : null;
       if (status === "resolved" && existingCase.status !== "resolved") {
         updateData.resolvedAt = resolvedAt || new Date();
-        updateData.resolvedBy = req.session.userId!;
+        updateData.resolvedBy = req.session.userid!;
       }
 
       const updatedCase = await prisma.moderationCase.update({
@@ -199,7 +199,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       await prisma.moderationLog.create({
         data: {
           workspaceGroupId: groupId,
-          actionBy: req.session.userId!,
+          actionBy: req.session.userid!,
           action: status === "resolved" ? "case_resolved" : "case_updated",
           targetUser: existingCase.targetUserId,
           targetUsername: existingCase.targetUsername,
@@ -237,10 +237,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         });
       }
 
-      const isAuthor = existingCase.createdBy === req.session.userId!;
+      const isAuthor = existingCase.createdBy === req.session.userid!;
       const user = await prisma.user.findFirst({
         where: {
-          userid: req.session.userId!,
+          userid: req.session.userid!,
         },
         include: {
           roles: {
@@ -278,7 +278,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       await prisma.moderationLog.create({
         data: {
           workspaceGroupId: groupId,
-          actionBy: req.session.userId!,
+          actionBy: req.session.userid!,
           action: "case_deleted",
           targetUser: existingCase.targetUserId,
           targetUsername: existingCase.targetUsername,

@@ -29,8 +29,10 @@ const STATUS_COLORS: Record<string, string> = {
   open: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300",
   resolved: "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-300",
   archived: "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400",
-  appealed: "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300",
-  revoked: "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300",
+  appealed:
+    "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300",
+  revoked:
+    "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300",
 };
 
 interface ModerationCaseListItem {
@@ -134,8 +136,8 @@ export const getServerSideProps = withPermissionCheckSsr(
         props: {
           cases: JSON.parse(
             JSON.stringify(cases, (_, value) =>
-              typeof value === "bigint" ? value.toString() : value
-            )
+              typeof value === "bigint" ? value.toString() : value,
+            ),
           ),
           stats: { total, open, resolved, activeBans },
         },
@@ -150,30 +152,37 @@ export const getServerSideProps = withPermissionCheckSsr(
       };
     }
   },
-  ["view_moderation"]
+  ["view_moderation"],
 );
 
-const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: initialCases, stats }) => {
+const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
+  cases: initialCases,
+  stats,
+}) => {
   const router = useRouter();
   const { id: workspaceId } = router.query;
   const workspaceData = useRecoilValue(workspacestate);
   const [cases, setCases] = useState(initialCases);
-  const [selectedCase, setSelectedCase] = useState<ModerationCaseListItem | null>(null);
+  const [selectedCase, setSelectedCase] =
+    useState<ModerationCaseListItem | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showRevokeModal, setShowRevokeModal] = useState(false);
   const [revokeReason, setRevokeReason] = useState("");
   const [revoking, setRevoking] = useState(false);
-  const [caseToRevoke, setCaseToRevoke] = useState<ModerationCaseListItem | null>(null);
+  const [caseToRevoke, setCaseToRevoke] =
+    useState<ModerationCaseListItem | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Check permissions
-  const canCreateCases = workspaceData.yourPermission?.includes("create_moderation_cases") || workspaceData.isAdmin;
-  const canExecutePunishments = workspaceData.yourPermission?.includes("execute_punishments") || workspaceData.isAdmin;
-  const canRevokePunishments = workspaceData.yourPermission?.includes("revoke_punishments") || workspaceData.isAdmin;
-
-  // Filter cases
+  const canCreateCases =
+    workspaceData.yourPermission?.includes("create_moderation_cases") ||
+    workspaceData.isAdmin;
+  const canExecutePunishments =
+    workspaceData.yourPermission?.includes("execute_punishments") ||
+    workspaceData.isAdmin;
+  const canRevokePunishments =
+    workspaceData.yourPermission?.includes("revoke_punishments") ||
+    workspaceData.isAdmin;
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
       const matchesStatus = filterStatus === "all" || c.status === filterStatus;
@@ -189,7 +198,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
     setLoading(true);
     try {
       const response = await axios.get(
-        `/api/workspace/${workspaceId}/moderation/cases`
+        `/api/workspace/${workspaceId}/moderation/cases`,
       );
       if (response.data.success) {
         setCases(response.data.data.cases);
@@ -205,7 +214,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
     try {
       const response = await axios.post(
         `/api/workspace/${workspaceId}/moderation/cases`,
-        formData
+        formData,
       );
       if (response.data.success) {
         toast.success("Case created successfully");
@@ -228,7 +237,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
           duration: caseData.banDuration,
           isPermanent: caseData.isPermanent,
           caseId: caseData.id,
-        }
+        },
       );
       if (response.data.success) {
         toast.success(response.data.data.message);
@@ -246,7 +255,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
 
   const handleRevoke = async () => {
     if (!caseToRevoke) return;
-    
+
     if (!revokeReason.trim()) {
       toast.error("Please provide a reason for revocation");
       return;
@@ -256,7 +265,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
     try {
       const response = await axios.post(
         `/api/workspace/${workspaceId}/moderation/cases/${caseToRevoke.id}/revoke`,
-        { reason: revokeReason }
+        { reason: revokeReason },
       );
 
       if (response.data.success) {
@@ -276,8 +285,6 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
   return (
     <div className="p-4 md:p-6">
       <Toaster position="bottom-center" />
-
-      {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -289,18 +296,17 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
             </p>
           </div>
           {canCreateCases && (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
-              >
-                <IconPlus size={18} />
-                <span className="hidden sm:inline">New Case</span>
-              </button>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+            >
+              <IconPlus size={18} />
+              <span className="hidden sm:inline">New Case</span>
+            </button>
           )}
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl p-4 shadow-sm mb-4">
         <div className="flex flex-wrap gap-3 items-center">
           <div className="flex-1 min-w-[200px]">
@@ -339,7 +345,6 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
         </div>
       </div>
 
-      {/* Cases List */}
       <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -368,13 +373,19 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
               {filteredCases.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-zinc-500 dark:text-zinc-400">
+                  <td
+                    colSpan={6}
+                    className="px-4 py-12 text-center text-zinc-500 dark:text-zinc-400"
+                  >
                     No cases found
                   </td>
                 </tr>
               ) : (
                 filteredCases.map((c) => (
-                  <tr key={c.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
+                  <tr
+                    key={c.id}
+                    className="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img
@@ -387,7 +398,9 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
                         />
                         <div>
                           <div className="font-medium text-zinc-900 dark:text-white text-sm">
-                            {c.targetUsername || c.targetUser?.username || "Unknown"}
+                            {c.targetUsername ||
+                              c.targetUser?.username ||
+                              "Unknown"}
                           </div>
                           <div className="text-xs text-zinc-500 dark:text-zinc-400">
                             ID: {c.targetUserId}
@@ -396,12 +409,15 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="max-w-xs truncate text-sm text-zinc-900 dark:text-white">{c.reason}</div>
+                      <div className="max-w-xs truncate text-sm text-zinc-900 dark:text-white">
+                        {c.reason}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          STATUS_COLORS[c.status] || "bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white"
+                          STATUS_COLORS[c.status] ||
+                          "bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white"
                         }`}
                       >
                         {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
@@ -421,7 +437,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
                           <button
                             onClick={() =>
                               router.push(
-                                `/workspace/${workspaceId}/moderation/cases/${c.id}`
+                                `/workspace/${workspaceId}/moderation/cases/${c.id}`,
                               )
                             }
                             className="text-primary hover:text-primary/80 transition-colors"
@@ -430,7 +446,10 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
                           </button>
                         </Tooltip>
                         {c.action && !c.revokedAt && canRevokePunishments && (
-                          <Tooltip orientation="top" tooltipText="Revoke Action">
+                          <Tooltip
+                            orientation="top"
+                            tooltipText="Revoke Action"
+                          >
                             <button
                               onClick={() => handleOpenRevokeModal(c)}
                               className="text-orange-500 hover:text-orange-600 transition-colors"
@@ -439,16 +458,21 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
                             </button>
                           </Tooltip>
                         )}
-                        {c.status === "open" && canExecutePunishments && (
-                          <Tooltip orientation="top" tooltipText="Execute Ban">
-                            <button
-                              onClick={() => handleExecuteBan(c)}
-                              className="text-red-500 hover:text-red-600 transition-colors"
+                        {c.status === "open" &&
+                          isBanAction(c.action) &&
+                          canExecutePunishments && (
+                            <Tooltip
+                              orientation="top"
+                              tooltipText="Execute Ban"
                             >
-                              <IconBan size={18} />
-                            </button>
-                          </Tooltip>
-                        )}
+                              <button
+                                onClick={() => handleExecuteBan(c)}
+                                className="text-red-500 hover:text-red-600 transition-colors"
+                              >
+                                <IconBan size={18} />
+                              </button>
+                            </Tooltip>
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -462,7 +486,9 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl border border-white/10">
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Create New Case</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
+              Create New Case
+            </h2>
             <CreateCaseForm
               onSubmit={handleCreateCase}
               onCancel={() => setShowCreateModal(false)}
@@ -474,9 +500,14 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
       {showRevokeModal && caseToRevoke && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl border border-white/10">
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Revoke Action</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
+              Revoke Action
+            </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-              This will revoke the {caseToRevoke.action?.replace(/_/g, ' ')} action for case <span className="font-medium">{caseToRevoke.targetUsername}</span>. Please provide a reason for the revocation.
+              This will revoke the {caseToRevoke.action?.replace(/_/g, " ")}{" "}
+              action for case{" "}
+              <span className="font-medium">{caseToRevoke.targetUsername}</span>
+              . Please provide a reason for the revocation.
             </p>
             <div className="space-y-4">
               <div>
@@ -517,6 +548,24 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: 
       )}
     </div>
   );
+};
+
+const isBanAction = (action?: string) =>
+  action === "temp_ban" || action === "perm_ban";
+
+const getActionLabel = (action?: string) => {
+  switch (action) {
+    case "warning":
+      return "Warning";
+    case "kick":
+      return "Kick";
+    case "temp_ban":
+      return "Temporary Ban";
+    case "perm_ban":
+      return "Permanent Ban";
+    default:
+      return "None";
+  }
 };
 
 const CreateCaseForm = ({
@@ -584,7 +633,9 @@ const CreateCaseForm = ({
       targetUserId: userFound.userId,
       targetUsername: userFound.username,
       ...formData,
-      expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
+      expiresAt: formData.expiresAt
+        ? new Date(formData.expiresAt).toISOString()
+        : undefined,
     });
   };
 
@@ -635,23 +686,31 @@ const CreateCaseForm = ({
           {userFound && (
             <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
               <IconCheck size={16} />
-              <span>User found: {userFound.username} (ID: {userFound.userId})</span>
+              <span>
+                User found: {userFound.username} (ID: {userFound.userId})
+              </span>
             </div>
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Reason</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+            Reason
+          </label>
           <input
             type="text"
             required
             value={formData.reason}
-            onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, reason: e.target.value })
+            }
             className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
             placeholder="Brief reason for case"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Description</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+            Description
+          </label>
           <textarea
             value={formData.description}
             onChange={(e) =>
@@ -669,7 +728,11 @@ const CreateCaseForm = ({
           <select
             value={formData.action}
             onChange={(e) => {
-              setFormData({ ...formData, action: e.target.value, expiresAt: "" });
+              setFormData({
+                ...formData,
+                action: e.target.value,
+                expiresAt: "",
+              });
             }}
             className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary transition-colors"
           >
@@ -689,7 +752,9 @@ const CreateCaseForm = ({
               type="datetime-local"
               required
               value={formData.expiresAt}
-              onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, expiresAt: e.target.value })
+              }
               min={new Date().toISOString().slice(0, 16)}
               className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
             />
