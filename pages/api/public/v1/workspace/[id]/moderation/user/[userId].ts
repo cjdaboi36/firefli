@@ -30,6 +30,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     if (current === "true") {
       where.revokedAt = null
+      where.status = "resolved"
       where.action = { not: "kick" }
       where.OR = [
         { isPermanent: true },
