@@ -47,6 +47,8 @@ model workspace {
   adminMessageLogs    AdminMessageLog[]
   recommendations     Recommendation[]
   notifications        Notification[]
+  moderationCases     ModerationCase[]
+  moderationLogs      ModerationLog[]
 }
 
 model config {
@@ -118,6 +120,13 @@ model user {
   quotaCompletions      UserQuotaCompletion[]  @relation("UserQuotaCompletions")
   completedQuotas       UserQuotaCompletion[]  @relation("CompletedByUser")
   notifications         Notification[]
+  createdModerationCases      ModerationCase[]       @relation("CreatedModerationCases")
+  resolvedModerationCases     ModerationCase[]       @relation("ResolvedModerationCases")
+  reportedModerationCases     ModerationCase[]       @relation("ReportedModerationCases")
+  revokedModerationCases      ModerationCase[]       @relation("RevokedModerationCases")
+  targetModerationCases       ModerationCase[]       @relation("TargetModerationCases")
+  moderationEvidence          ModerationEvidence[]
+  moderationLogs              ModerationLog[]
 
   @@index([birthdayMonth, birthdayDay])
 }
@@ -979,4 +988,74 @@ model Notification {
 
   @@index([userId, workspaceGroupId, read])
   @@index([userId, workspaceGroupId, createdAt])
+}
+
+model ModerationCase {
+  id               String               @id @default(uuid()) @db.Uuid
+  workspaceGroupId BigInt
+  targetUserId     BigInt
+  targetUsername   String?
+  reportedBy       BigInt?
+  createdBy        BigInt
+  reason           String
+  description      String?
+  status           String               @default("open")
+  action           String?
+  createdAt        DateTime             @default(now())
+  resolvedAt       DateTime?
+  resolvedBy       BigInt?
+  expiresAt        DateTime?
+  internalNotes    String?
+  publicNote       String?
+  banDuration      Int?
+  isPermanent      Boolean              @default(false)
+  revokedAt        DateTime?
+  revokedBy        BigInt?
+  revokeReason     String?
+  workspace        workspace            @relation(fields: [workspaceGroupId], references: [groupId])
+  targetUser       user                 @relation("TargetModerationCases", fields: [targetUserId], references: [userid])
+  createdByUser    user                 @relation("CreatedModerationCases", fields: [createdBy], references: [userid])
+  resolvedByUser   user?                @relation("ResolvedModerationCases", fields: [resolvedBy], references: [userid])
+  reportedByUser   user?                @relation("ReportedModerationCases", fields: [reportedBy], references: [userid])
+  revokedByUser    user?                @relation("RevokedModerationCases", fields: [revokedBy], references: [userid])
+  evidence         ModerationEvidence[]
+
+  @@index([workspaceGroupId, status])
+  @@index([targetUserId, workspaceGroupId])
+  @@index([createdAt])
+}
+
+model ModerationEvidence {
+  id          String         @id @default(uuid()) @db.Uuid
+  caseId      String         @db.Uuid
+  uploadedBy  BigInt
+  fileUrl     String
+  fileName    String
+  fileType    String
+  fileSize    Int
+  description String?
+  createdAt   DateTime       @default(now())
+  case        ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  uploader    user           @relation(fields: [uploadedBy], references: [userid])
+
+  @@index([caseId])
+  @@index([uploadedBy])
+}
+
+model ModerationLog {
+  id               String    @id @default(uuid()) @db.Uuid
+  workspaceGroupId BigInt
+  actionBy         BigInt
+  action           String
+  targetUser       BigInt?
+  targetUsername   String?
+  caseId           String?   @db.Uuid
+  details          Json?
+  createdAt        DateTime  @default(now())
+  workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId])
+  actor            user      @relation(fields: [actionBy], references: [userid])
+
+  @@index([workspaceGroupId, createdAt])
+  @@index([actionBy])
+  @@index([targetUser])
 }

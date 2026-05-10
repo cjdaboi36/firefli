@@ -1,0 +1,725 @@
+import workspace from "@/layouts/workspace";
+import { pageWithLayout } from "@/layoutTypes";
+import axios from "axios";
+import { useRouter } from "next/router";
+import { useState, useMemo } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import { withPermissionCheckSsr } from "@/utils/permissionsManager";
+import prisma from "@/utils/database";
+import moment from "moment";
+import Tooltip from "@/components/tooltip";
+import { useRecoilValue } from "recoil";
+import { workspacestate } from "@/state";
+import {
+  IconShield,
+  IconAlertTriangle,
+  IconBan,
+  IconCheck,
+  IconX,
+  IconPlus,
+  IconFileText,
+  IconUpload,
+  IconSearch,
+  IconFilter,
+  IconEye,
+  IconLoader2,
+} from "@tabler/icons-react";
+
+const STATUS_COLORS: Record<string, string> = {
+  open: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300",
+  resolved: "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-300",
+  archived: "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400",
+  appealed: "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300",
+  revoked: "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300",
+};
+
+interface ModerationCaseListItem {
+  id: string;
+  targetUserId: string;
+  targetUsername?: string;
+  reason: string;
+  status: string;
+  action?: string;
+  createdAt: string;
+  banDuration?: number;
+  isPermanent?: boolean;
+  revokedAt?: string;
+  targetUser?: {
+    userid: string;
+    username?: string;
+    picture?: string;
+  };
+  creator?: {
+    userid: string;
+    username?: string;
+    picture?: string;
+  };
+  evidence?: Array<{ id: string }>;
+}
+
+interface ModerationStats {
+  total: number;
+  open: number;
+  resolved: number;
+  activeBans: number;
+}
+
+interface ModerationDashboardProps {
+  cases: ModerationCaseListItem[];
+  stats: ModerationStats;
+}
+
+export const getServerSideProps = withPermissionCheckSsr(
+  async ({ params, req }) => {
+    const userId = req.session?.userid;
+    const groupId = BigInt(params?.id as string);
+
+    if (!userId) {
+      return {
+        props: {
+          cases: [],
+          stats: { total: 0, open: 0, resolved: 0, activeBans: 0 },
+        },
+      };
+    }
+
+    try {
+      // Fetch recent cases
+      const cases = await prisma.moderationCase.findMany({
+        where: {
+          workspaceGroupId: groupId,
+        },
+        include: {
+          targetUser: {
+            select: {
+              userid: true,
+              username: true,
+              picture: true,
+            },
+          },
+          createdByUser: {
+            select: {
+              userid: true,
+              username: true,
+              picture: true,
+            },
+          },
+          evidence: {
+            select: {
+              id: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 50,
+      });
+
+      // Get stats
+      const [total, open, resolved, activeBans] = await Promise.all([
+        prisma.moderationCase.count({ where: { workspaceGroupId: groupId } }),
+        prisma.moderationCase.count({
+          where: { workspaceGroupId: groupId, status: "open" },
+        }),
+        prisma.moderationCase.count({
+          where: { workspaceGroupId: groupId, status: "resolved" },
+        }),
+        prisma.playerBan.count({
+          where: { workspaceGroupId: groupId, active: true },
+        }),
+      ]);
+
+      return {
+        props: {
+          cases: JSON.parse(
+            JSON.stringify(cases, (_, value) =>
+              typeof value === "bigint" ? value.toString() : value
+            )
+          ),
+          stats: { total, open, resolved, activeBans },
+        },
+      };
+    } catch (error) {
+      console.error("Error fetching moderation data:", error);
+      return {
+        props: {
+          cases: [],
+          stats: { total: 0, open: 0, resolved: 0, activeBans: 0 },
+        },
+      };
+    }
+  },
+  ["view_moderation_logs"]
+);
+
+const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({ cases: initialCases, stats }) => {
+  const router = useRouter();
+  const { id: workspaceId } = router.query;
+  const workspaceData = useRecoilValue(workspacestate);
+  const [cases, setCases] = useState(initialCases);
+  const [selectedCase, setSelectedCase] = useState<ModerationCaseListItem | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [revokeReason, setRevokeReason] = useState("");
+  const [revoking, setRevoking] = useState(false);
+  const [caseToRevoke, setCaseToRevoke] = useState<ModerationCaseListItem | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Check permissions
+  const canCreateCases = workspaceData.yourPermission?.includes("create_moderation_cases") || workspaceData.isAdmin;
+  const canExecutePunishments = workspaceData.yourPermission?.includes("execute_punishments") || workspaceData.isAdmin;
+  const canRevokePunishments = workspaceData.yourPermission?.includes("revoke_punishments") || workspaceData.isAdmin;
+
+  // Filter cases
+  const filteredCases = useMemo(() => {
+    return cases.filter((c) => {
+      const matchesStatus = filterStatus === "all" || c.status === filterStatus;
+      const matchesSearch =
+        !searchQuery ||
+        c.targetUsername?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.reason?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesStatus && matchesSearch;
+    });
+  }, [cases, filterStatus, searchQuery]);
+
+  const refreshCases = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `/api/workspace/${workspaceId}/moderation/cases`
+      );
+      if (response.data.success) {
+        setCases(response.data.data.cases);
+      }
+    } catch (error) {
+      toast.error("Failed to refresh cases");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateCase = async (formData: any) => {
+    try {
+      const response = await axios.post(
+        `/api/workspace/${workspaceId}/moderation/cases`,
+        formData
+      );
+      if (response.data.success) {
+        toast.success("Case created successfully");
+        setShowCreateModal(false);
+        refreshCases();
+      }
+    } catch (error) {
+      toast.error("Failed to create case");
+    }
+  };
+
+  const handleExecuteBan = async (caseData: ModerationCaseListItem) => {
+    try {
+      const response = await axios.post(
+        `/api/workspace/${workspaceId}/moderation/bans`,
+        {
+          userId: caseData.targetUserId,
+          username: caseData.targetUsername,
+          reason: caseData.reason,
+          duration: caseData.banDuration,
+          isPermanent: caseData.isPermanent,
+          caseId: caseData.id,
+        }
+      );
+      if (response.data.success) {
+        toast.success(response.data.data.message);
+        refreshCases();
+      }
+    } catch (error) {
+      toast.error("Failed to execute ban");
+    }
+  };
+
+  const handleOpenRevokeModal = (caseData: ModerationCaseListItem) => {
+    setCaseToRevoke(caseData);
+    setShowRevokeModal(true);
+  };
+
+  const handleRevoke = async () => {
+    if (!caseToRevoke) return;
+    
+    if (!revokeReason.trim()) {
+      toast.error("Please provide a reason for revocation");
+      return;
+    }
+
+    setRevoking(true);
+    try {
+      const response = await axios.post(
+        `/api/workspace/${workspaceId}/moderation/cases/${caseToRevoke.id}/revoke`,
+        { reason: revokeReason }
+      );
+
+      if (response.data.success) {
+        toast.success("Case action revoked successfully");
+        setShowRevokeModal(false);
+        setRevokeReason("");
+        setCaseToRevoke(null);
+        refreshCases();
+      }
+    } catch (error) {
+      toast.error("Failed to revoke case action");
+    } finally {
+      setRevoking(false);
+    }
+  };
+
+  return (
+    <div className="p-4 md:p-6">
+      <Toaster position="bottom-center" />
+
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+              Moderation Dashboard
+            </h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Manage cases, bans, and moderation actions
+            </p>
+          </div>
+          {canCreateCases && (
+            <Tooltip orientation="bottom" tooltipText="Create a new case">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+              >
+                <IconPlus size={18} />
+                <span className="hidden sm:inline">New Case</span>
+              </button>
+            </Tooltip>
+          )}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl p-4 shadow-sm mb-4">
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex-1 min-w-[200px]">
+            <div className="relative">
+              <IconSearch
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400"
+                size={18}
+              />
+              <input
+                type="text"
+                placeholder="Search by username or reason..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-sm"
+              />
+            </div>
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary text-sm"
+          >
+            <option value="all">All Status</option>
+            <option value="open">Open</option>
+            <option value="resolved">Resolved</option>
+            <option value="archived">Archived</option>
+            <option value="appealed">Appealed</option>
+          </select>
+          <button
+            onClick={refreshCases}
+            disabled={loading}
+            className="px-4 py-2 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 border border-zinc-200 dark:border-zinc-600 text-zinc-900 dark:text-white rounded-lg transition-colors disabled:opacity-50 text-sm font-medium"
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+      </div>
+
+      {/* Cases List */}
+      <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-zinc-50 dark:bg-zinc-700/50 border-b border-zinc-200 dark:border-zinc-600">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Target User
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Reason
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Evidence
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Created
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+              {filteredCases.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-zinc-500 dark:text-zinc-400">
+                    No cases found
+                  </td>
+                </tr>
+              ) : (
+                filteredCases.map((c) => (
+                  <tr key={c.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={
+                            c.targetUser?.picture ||
+                            `/api/workspace/${workspaceId}/avatar/${c.targetUserId}`
+                          }
+                          alt=""
+                          className="w-8 h-8 rounded-full ring-2 ring-white dark:ring-zinc-700"
+                        />
+                        <div>
+                          <div className="font-medium text-zinc-900 dark:text-white text-sm">
+                            {c.targetUsername || c.targetUser?.username || "Unknown"}
+                          </div>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                            ID: {c.targetUserId}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="max-w-xs truncate text-sm text-zinc-900 dark:text-white">{c.reason}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          STATUS_COLORS[c.status] || "bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white"
+                        }`}
+                      >
+                        {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                        {c.evidence?.length || 0} files
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                      {moment(c.createdAt).fromNow()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <Tooltip orientation="top" tooltipText="View Details">
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/workspace/${workspaceId}/moderation/cases/${c.id}`
+                              )
+                            }
+                            className="text-primary hover:text-primary/80 transition-colors"
+                          >
+                            <IconEye size={18} />
+                          </button>
+                        </Tooltip>
+                        {c.action && !c.revokedAt && canRevokePunishments && (
+                          <Tooltip orientation="top" tooltipText="Revoke Action">
+                            <button
+                              onClick={() => handleOpenRevokeModal(c)}
+                              className="text-orange-500 hover:text-orange-600 transition-colors"
+                            >
+                              <IconX size={18} />
+                            </button>
+                          </Tooltip>
+                        )}
+                        {c.status === "open" && canExecutePunishments && (
+                          <Tooltip orientation="top" tooltipText="Execute Ban">
+                            <button
+                              onClick={() => handleExecuteBan(c)}
+                              className="text-red-500 hover:text-red-600 transition-colors"
+                            >
+                              <IconBan size={18} />
+                            </button>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl border border-white/10">
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Create New Case</h2>
+            <CreateCaseForm
+              onSubmit={handleCreateCase}
+              onCancel={() => setShowCreateModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {showRevokeModal && caseToRevoke && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl border border-white/10">
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Revoke Action</h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+              This will revoke the {caseToRevoke.action?.replace(/_/g, ' ')} action for case <span className="font-medium">{caseToRevoke.targetUsername}</span>. Please provide a reason for the revocation.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                  Revocation Reason <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={revokeReason}
+                  onChange={(e) => setRevokeReason(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
+                  rows={4}
+                  placeholder="Explain why this action is being revoked..."
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleRevoke}
+                disabled={revoking || !revokeReason.trim()}
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {revoking ? "Revoking..." : "Revoke Action"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowRevokeModal(false);
+                  setRevokeReason("");
+                  setCaseToRevoke(null);
+                }}
+                disabled={revoking}
+                className="px-6 bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white py-2.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CreateCaseForm = ({
+  onSubmit,
+  onCancel,
+}: {
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
+}) => {
+  const [usernameSearch, setUsernameSearch] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [userFound, setUserFound] = useState<{
+    userId: string;
+    username: string;
+  } | null>(null);
+  const [formData, setFormData] = useState({
+    reason: "",
+    description: "",
+    action: "",
+    expiresAt: "",
+  });
+
+  const handleSearchUser = async () => {
+    if (!usernameSearch.trim()) {
+      toast.error("Please enter a username");
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const response = await axios.post("/api/roblox/id", {
+        keyword: usernameSearch.trim(),
+      });
+
+      if (response.data?.data?.length > 0) {
+        const user = response.data.data[0];
+        setUserFound({
+          userId: user.id.toString(),
+          username: user.name,
+        });
+        toast.success(`User found: ${user.name}`);
+      } else {
+        setUserFound(null);
+        toast.error("Roblox user not found");
+      }
+    } catch (error) {
+      setUserFound(null);
+      toast.error("Failed to search for user");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userFound) {
+      toast.error("Please search and select a user first");
+      return;
+    }
+    if (formData.action === "temp_ban" && !formData.expiresAt) {
+      toast.error("Please select an expiry date for temporary ban");
+      return;
+    }
+    onSubmit({
+      targetUserId: userFound.userId,
+      targetUsername: userFound.username,
+      ...formData,
+      expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+            Target Username <span className="text-red-500">*</span>
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={usernameSearch}
+              onChange={(e) => {
+                setUsernameSearch(e.target.value);
+                setUserFound(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSearchUser();
+                }
+              }}
+              className="flex-1 px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+              placeholder="Enter Roblox username..."
+              disabled={searching}
+            />
+            <button
+              type="button"
+              onClick={handleSearchUser}
+              disabled={searching || !usernameSearch.trim()}
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {searching ? (
+                <>
+                  <IconLoader2 size={16} className="animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <IconSearch size={16} />
+                  Search
+                </>
+              )}
+            </button>
+          </div>
+          {userFound && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+              <IconCheck size={16} />
+              <span>User found: {userFound.username} (ID: {userFound.userId})</span>
+            </div>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Reason</label>
+          <input
+            type="text"
+            required
+            value={formData.reason}
+            onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+            className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+            placeholder="Brief reason for case"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Description</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
+            rows={3}
+            placeholder="Detailed description"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+            Planned Action
+          </label>
+          <select
+            value={formData.action}
+            onChange={(e) => {
+              setFormData({ ...formData, action: e.target.value, expiresAt: "" });
+            }}
+            className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary transition-colors"
+          >
+            <option value="">None yet</option>
+            <option value="warning">Warning</option>
+            <option value="kick">Kick</option>
+            <option value="temp_ban">Temp Ban</option>
+            <option value="perm_ban">Perm Ban</option>
+          </select>
+        </div>
+        {formData.action === "temp_ban" && (
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+              Ban Expires At <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="datetime-local"
+              required
+              value={formData.expiresAt}
+              onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+              min={new Date().toISOString().slice(0, 16)}
+              className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+            />
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Select when the temporary ban should expire
+            </p>
+          </div>
+        )}
+      </div>
+      <div className="flex gap-3 mt-6">
+        <button
+          type="submit"
+          disabled={!userFound}
+          className="flex-1 bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Create Case
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-6 bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white py-2.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors font-medium"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+};
+
+ModerationDashboard.layout = workspace;
+export default ModerationDashboard;

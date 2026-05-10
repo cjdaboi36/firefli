@@ -143,6 +143,16 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
       "Edit visits": "edit_alliance_visits",
       "Delete visits": "delete_alliance_visits",
     },
+    Moderation: {
+      "View moderation": "view_moderation",
+      "Create moderation cases": "create_moderation_cases",
+      "Edit moderation cases": "edit_moderation_cases",
+      "Delete moderation cases": "delete_moderation_cases",
+      "Execute punishments": "execute_punishments",
+      "Revoke punishments": "revoke_punishments",
+      "Upload evidence": "upload_evidence",
+      "Delete evidence": "delete_evidence",
+    },
     Settings: {
       "Admin (Manage workspace)": "admin",
       "Reset activity": "reset_activity",

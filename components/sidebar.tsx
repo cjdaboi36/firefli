@@ -297,6 +297,12 @@ const Sidebar: NextPage = () => {
         `/workspace/${workspace.groupId}/recommendations`,
       ]
     }] : []),
+    {
+      name: "Moderation",
+      href: `/workspace/${workspace.groupId}/moderation`,
+      icon: UserShield01Icon,
+      accessible: workspace.yourPermission?.includes("view_moderation") || workspace.isAdmin,
+    },
     ...(alliesEnabled ? [{
       name: "Alliances",
       href: `/workspace/${workspace.groupId}/alliances`,
