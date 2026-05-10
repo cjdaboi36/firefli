@@ -23,16 +23,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!key) return res.status(401).json({ success: false, error: "Invalid or expired API key" })
 
     const { current, startDate, endDate } = req.query
-
     const where: any = {
       workspaceGroupId: BigInt(workspaceId),
       targetUserId: BigInt(targetUserId),
     }
 
     if (current === "true") {
-      where.status = "open"
       where.revokedAt = null
+      where.action = { not: "kick" }
       where.OR = [
+        { isPermanent: true },
         { expiresAt: null },
         { expiresAt: { gt: new Date() } },
       ]
