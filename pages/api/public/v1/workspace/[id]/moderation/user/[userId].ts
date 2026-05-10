@@ -35,25 +35,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         in: ["ban", "perm_ban", "temp_ban"],
       }
       where.OR = [
-       { isPermanent: true },
-       { expiresAt: { gt: new Date() } },
+        { isPermanent: true },
+        { expiresAt: { gt: new Date() } },
       ]
-    } else if (startDate || endDate) {
-      where.createdAt = {}
-      if (startDate) {
-        const start = new Date(startDate as string)
-        if (isNaN(start.getTime())) {
-          return res.status(400).json({ success: false, error: "Invalid startDate" })
-        }
-        where.createdAt.gte = start
-      }
-      if (endDate) {
-        const end = new Date(endDate as string)
-        if (isNaN(end.getTime())) {
-          return res.status(400).json({ success: false, error: "Invalid endDate" })
-        }
-        where.createdAt.lte = end
-      }
     }
 
     const cases = await prisma.moderationCase.findMany({

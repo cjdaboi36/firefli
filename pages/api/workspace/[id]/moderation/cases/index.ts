@@ -126,6 +126,25 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         });
       }
 
+	  const allowedActions = ["kick", "temp_ban", "perm_ban"];
+
+		if (!action || !allowedActions.includes(action)) {
+		return res.status(400).json({
+			success: false,
+			error: "Invalid action. Must be kick, temp_ban, or perm_ban",
+		});
+		}
+
+		if (action === "temp_ban" && !expiresAt) {
+		return res.status(400).json({
+			success: false,
+			error: "expiresAt is required for temporary bans",
+		});
+		}
+
+		const finalIsPermanent = action === "perm_ban";
+		const finalExpiresAt = action === "temp_ban" && expiresAt ? new Date(expiresAt) : null;
+
       const moderationCase = await prisma.moderationCase.create({
         data: {
           workspaceGroupId: groupId,
@@ -139,8 +158,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           internalNotes,
           publicNote,
           banDuration,
-          isPermanent,
-          expiresAt: expiresAt ? new Date(expiresAt) : null,
+          isPermanent: finalIsPermanent,
+          expiresAt: finalExpiresAt,
         },
         include: {
           targetUser: {
