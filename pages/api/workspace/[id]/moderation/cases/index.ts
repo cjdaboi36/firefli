@@ -138,24 +138,33 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         });
       }
 
-	  const allowedActions = ["warning", "kick", "temp_ban", "perm_ban"];
+      const allowedActions = ["warning", "kick", "temp_ban", "perm_ban"];
 
-		if (!action || !allowedActions.includes(action)) {
-		return res.status(400).json({
-			success: false,
-			error: "Invalid action. Must be warning, kick, or ban.",
-		});
-		}
+      if (!action || !allowedActions.includes(action)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid action. Must be warning, kick, or ban.",
+        });
+      }
 
-		if (action === "temp_ban" && !expiresAt) {
-		return res.status(400).json({
-			success: false,
-			error: "expiresAt is required for temporary bans",
-		});
-		}
+      if (action === "temp_ban" && !expiresAt) {
+        return res.status(400).json({
+          success: false,
+          error: "expiresAt is required for temporary bans",
+        });
+      }
 
-		const finalIsPermanent = action === "perm_ban";
-		const finalExpiresAt = action === "temp_ban" && expiresAt ? new Date(expiresAt) : null;
+      const finalIsPermanent = action === "perm_ban";
+      const finalExpiresAt =
+        action === "temp_ban" && expiresAt ? new Date(expiresAt) : null;
+      await prisma.user.upsert({
+        where: { userid: BigInt(targetUserId) },
+        update: targetUsername ? { username: String(targetUsername) } : {},
+        create: {
+          userid: BigInt(targetUserId),
+          username: targetUsername ? String(targetUsername) : null,
+        },
+      });
 
       const moderationCase = await prisma.moderationCase.create({
         data: {
