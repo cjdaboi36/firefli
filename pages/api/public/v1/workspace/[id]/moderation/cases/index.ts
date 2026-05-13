@@ -4,7 +4,7 @@ import { withPublicApiRateLimit } from "@/utils/prtl"
 import { validateApiKey } from "@/utils/api-auth"
 
 const VALID_STATUSES = ["open", "resolved", "appealed", "archived"]
-const VALID_ACTIONS = ["warning", "kick", "timeout", "ban"]
+const VALID_ACTIONS = ["warning", "kick", "temp_ban", "perm_ban"]
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ success: false, error: "Method not allowed" })
@@ -29,7 +29,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       action,
       publicNote,
       banDuration,
-      isPermanent = false,
       expiresAt,
     } = req.body
 
@@ -59,8 +58,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ success: false, error: `action must be one of: ${VALID_ACTIONS.join(", ")}` })
     }
 
+    if (action === "temp_ban" && !expiresAt) {
+      return res.status(400).json({ success: false, error: "expiresAt is required for temporary bans" })
+    }
+
+    const finalIsPermanent = action === "perm_ban"
     let parsedExpiresAt: Date | null = null
-    if (expiresAt) {
+    if (action === "temp_ban" && expiresAt) {
       parsedExpiresAt = new Date(expiresAt)
       if (isNaN(parsedExpiresAt.getTime())) {
         return res.status(400).json({ success: false, error: "Invalid expiresAt date" })
@@ -93,7 +97,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         action: action ?? null,
         publicNote: publicNote ? String(publicNote) : null,
         banDuration: banDuration != null ? Number(banDuration) : null,
-        isPermanent: Boolean(isPermanent),
+        isPermanent: finalIsPermanent,
         expiresAt: parsedExpiresAt,
       },
     })
