@@ -8,14 +8,15 @@ const publicApiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
+    const workspaceId = req.url?.match(/\/workspace\/([^/?]+)/)?.[1] ?? "global";
     const apiKey = (req as any).headers?.authorization?.replace("Bearer ", "") || "";
-    if (apiKey) return `apikey:${apiKey}`;
+    if (apiKey) return `apikey:${apiKey}:workspace:${workspaceId}`;
 
     const cfIp = (req as any).headers?.["cf-connecting-ip"];
     const xRealIp = (req as any).headers?.["x-real-ip"];
     const forwarded = (req as any).headers?.["x-forwarded-for"];
     const remoteAddress = (req as any).socket?.remoteAddress;
-    return `ip:${cfIp || xRealIp || forwarded?.split(",")[0] || remoteAddress || "unknown"}`;
+    return `ip:${cfIp || xRealIp || forwarded?.split(",")[0] || remoteAddress || "unknown"}:workspace:${workspaceId}`;
   },
 });
 
