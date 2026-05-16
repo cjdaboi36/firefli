@@ -110,7 +110,8 @@ const StickyWidget: React.FC = () => {
 
   if (isEditing && editData) {
     return (
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3 h-full">
+        <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
         <div>
           <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1 block">Title</label>
           <input
@@ -164,7 +165,8 @@ const StickyWidget: React.FC = () => {
         >
           <IconPlus className="w-3.5 h-3.5" /> Add section
         </button>
-        <div className="flex gap-2 pt-1">
+        </div>
+        <div className="flex gap-2">
           <button
             onClick={handleSave}
             disabled={isSaving}
@@ -190,7 +192,7 @@ const StickyWidget: React.FC = () => {
         {isCustom && announcement.editorPicture ? (
           <img src={announcement.editorPicture} alt={announcement.editorUsername || ""} className="w-full h-full object-cover" />
         ) : (
-          <img src="/stickylogo.png" alt="Firefli" className="w-5 h-5 object-contain" />
+          <img src="/stickylogo.png" alt="Firefli" className="w-full h-full object-cover" />
         )}
       </div>
       <div className="flex-1 min-w-0">
