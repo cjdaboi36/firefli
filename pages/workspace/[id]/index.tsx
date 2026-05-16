@@ -506,7 +506,7 @@ const Home: pageWithLayout = () => {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       {isEditing && (
-        <div className="sticky top-0 z-50 bg-primary text-white px-4 py-2.5 flex items-center justify-between shadow-lg">
+        <div className="sticky top-3 z-50 mx-3 bg-primary text-white px-4 py-2.5 flex items-center justify-between shadow-lg rounded-2xl border border-white/20">
           <div className="flex items-center gap-2 min-w-0">
             <IconEdit className="w-4 h-4 flex-shrink-0" />
             <span className="text-sm font-medium truncate">

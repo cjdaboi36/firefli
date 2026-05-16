@@ -257,6 +257,7 @@ const Views: pageWithLayout<pageProps> = ({
       value: string;
     }[]
   >([]);
+  const [filterOperator, setFilterOperator] = useState<'AND' | 'OR'>('AND');
   const [savedViews, setSavedViews] = useState<any[]>([]);
   const [localViews, setLocalViews] = useState<any[]>([]);
   const [isSaveOpen, setIsSaveOpen] = useState(false);
@@ -765,11 +766,9 @@ const Views: pageWithLayout<pageProps> = ({
       setPagination((prev) => ({ ...prev, pageIndex: page }));
     }
   }, [router.query.page]);
-
-  // Reset to page 0 when filters change
   useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  }, [colFilters]);
+  }, [colFilters, filterOperator]);
 
   useEffect(() => {
     const fetchStaffData = async () => {
@@ -789,6 +788,7 @@ const Views: pageWithLayout<pageProps> = ({
               pageSize: pagination.pageSize,
               filters: JSON.stringify(colFilters),
               columns: JSON.stringify(visibleColumnKeys),
+              filterOperator,
             },
           },
         );
@@ -813,6 +813,7 @@ const Views: pageWithLayout<pageProps> = ({
     pagination.pageSize,
     colFilters,
     columnVisibility,
+    filterOperator,
   ]);
 
   const applySavedView = (view: any) => {
@@ -820,8 +821,10 @@ const Views: pageWithLayout<pageProps> = ({
     const filtersField = view.filters;
     if (Array.isArray(filtersField)) {
       setColFilters(filtersField || []);
+      setFilterOperator('AND');
     } else if (filtersField && typeof filtersField === "object") {
       setColFilters(filtersField.filters || []);
+      setFilterOperator(filtersField.filterOperator === 'OR' ? 'OR' : 'AND');
       if (filtersField.sorting && Array.isArray(filtersField.sorting)) {
         try {
           setSorting(filtersField.sorting);
@@ -833,6 +836,7 @@ const Views: pageWithLayout<pageProps> = ({
       }
     } else {
       setColFilters([]);
+      setFilterOperator('AND');
     }
 
     setColumnVisibility(view.columnVisibility || {});
@@ -868,6 +872,7 @@ const Views: pageWithLayout<pageProps> = ({
       quotaFailed: false,
     });
     setSorting([]);
+    setFilterOperator('AND');
     setIsEditMode(false);
     setOriginalViewConfig(null);
   };
@@ -884,6 +889,7 @@ const Views: pageWithLayout<pageProps> = ({
     try {
       const filtersPayload: any = {
         filters: colFilters,
+        filterOperator,
       };
 
       if (sorting && Array.isArray(sorting) && sorting.length > 0) {
@@ -973,15 +979,25 @@ const Views: pageWithLayout<pageProps> = ({
 
   const hasUnsavedChanges = () => {
     if (!isEditMode || !originalViewConfig) return false;
-
-    const currentFilters = {
+    const currentFilters: any = {
       filters: colFilters,
-      sorting: sorting,
+      filterOperator,
     };
+    if (sorting && sorting.length > 0) {
+      currentFilters.sorting = sorting;
+    }
+
+    const storedFilters = originalViewConfig.filters;
+    const normalisedStored: any = {
+      filters: storedFilters?.filters || [],
+      filterOperator: storedFilters?.filterOperator || 'AND',
+    };
+    if (storedFilters?.sorting && storedFilters.sorting.length > 0) {
+      normalisedStored.sorting = storedFilters.sorting;
+    }
 
     const filtersChanged =
-      JSON.stringify(currentFilters) !==
-      JSON.stringify(originalViewConfig.filters);
+      JSON.stringify(currentFilters) !== JSON.stringify(normalisedStored);
     const columnsChanged =
       JSON.stringify(columnVisibility) !==
       JSON.stringify(originalViewConfig.columnVisibility);
@@ -996,6 +1012,7 @@ const Views: pageWithLayout<pageProps> = ({
       try {
         const filtersPayload: any = {
           filters: colFilters,
+          filterOperator,
         };
 
         if (sorting && Array.isArray(sorting) && sorting.length > 0) {
@@ -1508,21 +1525,32 @@ const Views: pageWithLayout<pageProps> = ({
                                 Add Filter
                               </button>
 
-                              {colFilters.map((filter) => (
-                                <div
-                                  key={filter.id}
-                                  className="p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-900/50"
-                                >
-                                  <Filter
-                                    ranks={ranks}
-                                    departments={departments}
-                                    updateFilter={(col, op, value) =>
-                                      updateFilter(filter.id, col, op, value)
-                                    }
-                                    deleteFilter={() => removeFilter(filter.id)}
-                                    data={filter}
-                                  />
-                                </div>
+                              {colFilters.map((filter, index) => (
+                                <Fragment key={filter.id}>
+                                  <div
+                                    className="p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-900/50"
+                                  >
+                                    <Filter
+                                      ranks={ranks}
+                                      departments={departments}
+                                      updateFilter={(col, op, value) =>
+                                        updateFilter(filter.id, col, op, value)
+                                      }
+                                      deleteFilter={() => removeFilter(filter.id)}
+                                      data={filter}
+                                    />
+                                  </div>
+                                  {index < colFilters.length - 1 && (
+                                    <div className="flex justify-center">
+                                      <button
+                                        onClick={() => setFilterOperator(op => op === 'AND' ? 'OR' : 'AND')}
+                                        className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-colors"
+                                      >
+                                        {filterOperator}
+                                      </button>
+                                    </div>
+                                  )}
+                                </Fragment>
                               ))}
                               {colFilters.length === 0 && (
                                 <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-2">
