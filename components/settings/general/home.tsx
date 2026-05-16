@@ -113,10 +113,10 @@ const home: FC<props> = ({ triggerToast }) => {
           ...prev,
           settings: { ...prev.settings, bannerImage: path },
         }));
-        triggerToast.success(data ? "Banner saved!" : "Banner removed");
+        triggerToast.success(data ? "Banner saved!" : "Banner removed!");
       }
     } catch {
-      triggerToast.error("Failed to save banner");
+      triggerToast.error("Failed to save banner.");
     } finally {
       setBannerSaving(false);
     }
@@ -135,7 +135,7 @@ const home: FC<props> = ({ triggerToast }) => {
         </p>
 
         {bannerPreview && (
-          <div className="relative rounded-xl overflow-hidden mb-3 h-32 bg-zinc-100 dark:bg-zinc-800 group">
+          <div className={`relative overflow-hidden mb-3 h-32 bg-zinc-100 dark:bg-zinc-800 group${bannerPreview?.startsWith('data:') ? ' rounded-xl' : ''}`}>
             <img
               src={bannerPreview}
               alt="Banner preview"
