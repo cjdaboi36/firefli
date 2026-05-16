@@ -37,7 +37,7 @@ const GamesWidget: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 gap-2">
         {[1, 2].map((i) => (
           <div
             key={i}
@@ -73,7 +73,7 @@ const GamesWidget: React.FC = () => {
   }
 
   return (
-    <div className="overflow-y-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+    <div className="overflow-y-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 gap-2">
       {games.map((game) => (
         <div
           key={game.placeId}
@@ -104,9 +104,7 @@ const GamesWidget: React.FC = () => {
                 {game.name}
               </p>
               <a
-                href={`https://www.roblox.com/games/${game.placeId}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={`roblox://experiences/start?placeId=${game.placeId}`}
                 className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
               >
                 <IconPlayerPlay className="w-3 h-3" fill="currentColor" />
