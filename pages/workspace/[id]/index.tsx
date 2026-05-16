@@ -133,7 +133,7 @@ const Home: pageWithLayout = () => {
     wall: {
       component: wall,
       icon: IconWall,
-      title: "Wall",
+      title: "Wall Posts",
       description: "Latest messages and announcements",
       color: "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20",
     },
@@ -190,7 +190,7 @@ const Home: pageWithLayout = () => {
       component: GamesWidget,
       icon: IconWorld,
       title: "Featured Games",
-      description: "Your workspace Roblox games",
+      description: "Your group's Roblox games",
       color: "bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-900/20 dark:to-sky-800/20",
     },
   }
