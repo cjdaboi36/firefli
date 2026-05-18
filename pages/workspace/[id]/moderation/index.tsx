@@ -7,10 +7,12 @@ import toast, { Toaster } from "react-hot-toast";
 import { withPermissionCheckSsr } from "@/utils/permissionsManager";
 import prisma from "@/utils/database";
 import { getConfig } from "@/utils/configEngine";
+import { fetchGroupGames } from "@/utils/roblox";
 import moment from "moment";
 import Tooltip from "@/components/tooltip";
 import { useRecoilValue } from "recoil";
 import { workspacestate } from "@/state";
+import { Listbox } from "@headlessui/react";
 import {
   IconFile,
   IconAlertTriangle,
@@ -25,6 +27,8 @@ import {
   IconEye,
   IconLoader2,
   IconTrash,
+  IconChevronDown,
+  IconDeviceGamepad2,
 } from "@tabler/icons-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -48,6 +52,7 @@ interface ModerationCaseListItem {
   banDuration?: number;
   isPermanent?: boolean;
   revokedAt?: string;
+  placeIds?: string[];
   targetUser?: {
     userid: string;
     username?: string;
@@ -73,6 +78,7 @@ interface ModerationDashboardProps {
   stats: ModerationStats;
   initialTotal: number;
   initialPages: number;
+  games: Array<{ name: string; id: number }>;
 }
 
 export const getServerSideProps = withPermissionCheckSsr(
@@ -92,8 +98,20 @@ export const getServerSideProps = withPermissionCheckSsr(
           stats: { total: 0, open: 0, resolved: 0, activeBans: 0 },
           initialTotal: 0,
           initialPages: 0,
+          games: [],
         },
       };
+    }
+
+    let games: Array<{ name: string; id: number }> = [];
+    try {
+      const fetchedGames = await fetchGroupGames(Number(groupId));
+      games = fetchedGames
+        .filter((game: any) => game.rootPlaceId)
+        .map((game: any) => ({ name: game.name, id: Number(game.rootPlaceId) }))
+        .filter((game: any) => !isNaN(game.id) && game.id > 0);
+    } catch {
+      // empty
     }
 
     try {
@@ -154,6 +172,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           stats: { total, open, resolved, activeBans },
           initialTotal: total,
           initialPages: Math.ceil(total / 20),
+          games,
         },
       };
     } catch (error) {
@@ -164,6 +183,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           stats: { total: 0, open: 0, resolved: 0, activeBans: 0 },
           initialTotal: 0,
           initialPages: 0,
+          games: [],
         },
       };
     }
@@ -176,6 +196,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
   stats,
   initialTotal,
   initialPages,
+  games,
 }) => {
   const router = useRouter();
   const { id: workspaceId } = router.query;
@@ -823,6 +844,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
               onSubmit={handleCreateCase}
               onCancel={() => setShowCreateModal(false)}
               workspaceId={workspaceId as string}
+              games={games}
             />
           </div>
         </div>
@@ -955,10 +977,12 @@ const CreateCaseForm = ({
   onSubmit,
   onCancel,
   workspaceId,
+  games,
 }: {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   workspaceId: string;
+  games: Array<{ name: string; id: number }>;
 }) => {
   const [usernameSearch, setUsernameSearch] = useState("");
   const [searching, setSearching] = useState(false);
@@ -972,6 +996,7 @@ const CreateCaseForm = ({
     action: "",
     expiresAt: "",
   });
+  const [selectedGameIds, setSelectedGameIds] = useState<number[]>([]);
 
   const handleSearchUser = async () => {
     if (!usernameSearch.trim()) {
@@ -991,7 +1016,7 @@ const CreateCaseForm = ({
           userId: user.id.toString(),
           username: user.name,
         });
-        toast.success(`User found: ${user.name}`);
+        toast.success(`Found ${user.name}!`);
       } else {
         setUserFound(null);
         toast.error("Roblox user not found");
@@ -1021,6 +1046,7 @@ const CreateCaseForm = ({
       expiresAt: formData.expiresAt
         ? new Date(formData.expiresAt).toISOString()
         : undefined,
+      placeIds: selectedGameIds.map(String),
     });
   };
 
@@ -1088,6 +1114,9 @@ const CreateCaseForm = ({
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
             Reason
           </label>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+            Publically Visible reason.
+          </p>
           <input
             type="text"
             required
@@ -1103,6 +1132,9 @@ const CreateCaseForm = ({
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
             Description
           </label>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+            Internal notes for moderators, provide as much detail as possible.
+          </p>
           <textarea
             value={formData.description}
             onChange={(e) =>
@@ -1117,6 +1149,9 @@ const CreateCaseForm = ({
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
             Planned Action
           </label>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+            Action you propose to take against this user.
+          </p>
           <select
             value={formData.action}
             onChange={(e) => {
@@ -1155,6 +1190,86 @@ const CreateCaseForm = ({
             </p>
           </div>
         )}
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+            Affected Places
+          </label>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+            Restrict this action to specific experiences.
+          </p>
+          {games.length > 0 ? (
+            <div className="relative">
+              <Listbox
+                value={selectedGameIds}
+                onChange={setSelectedGameIds}
+                multiple
+              >
+                <Listbox.Button className="flex items-center justify-between w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-left focus:ring-2 focus:ring-primary focus:border-transparent transition-colors">
+                  <span className="flex items-center gap-2 truncate text-sm text-zinc-700 dark:text-zinc-300">
+                    <IconDeviceGamepad2 size={16} className="text-zinc-400 flex-shrink-0" />
+                    {selectedGameIds.length === 0
+                      ? "All experiences"
+                      : selectedGameIds.length === 1
+                      ? games.find((g) => g.id === selectedGameIds[0])?.name ?? `Experience ${selectedGameIds[0]}`
+                      : `${selectedGameIds.length} experiences selected`}
+                  </span>
+                  <IconChevronDown size={16} className="text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
+                </Listbox.Button>
+                <Listbox.Options className="absolute z-20 w-full mt-1 overflow-auto bg-white dark:bg-zinc-800 rounded-lg shadow-lg max-h-48 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  {games.map((game) => (
+                    <Listbox.Option
+                      key={game.id}
+                      value={game.id}
+                      className={({ active }) =>
+                        `${active ? "bg-primary/10 text-primary" : "text-zinc-900 dark:text-white"} cursor-pointer select-none relative py-2.5 pl-10 pr-4 text-sm`
+                      }
+                    >
+                      {({ selected, active }) => (
+                        <>
+                          <span className={`${selected ? "font-medium" : "font-normal"} block truncate`}>
+                            {game.name}
+                          </span>
+                          {selected && (
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-primary">
+                              <IconCheck size={16} aria-hidden="true" />
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </Listbox.Option>
+                  ))}
+                </Listbox.Options>
+              </Listbox>
+              {selectedGameIds.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedGameIds.map((gid) => {
+                    const game = games.find((g) => g.id === gid);
+                    return (
+                      <span
+                        key={gid}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium"
+                      >
+                        {game?.name ?? `Place ${gid}`}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedGameIds(selectedGameIds.filter((id) => id !== gid))}
+                          className="hover:text-primary/60 transition-colors"
+                          aria-label={`Remove ${game?.name ?? gid}`}
+                        >
+                          <IconX size={12} />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+              No games found for this workspace; unavailable.
+            </p>
+          )}
+        </div>
       </div>
       <div className="flex gap-3 mt-6">
         <button

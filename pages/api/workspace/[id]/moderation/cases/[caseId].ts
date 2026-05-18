@@ -104,6 +104,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         isPermanent,
         resolvedAt,
         expiresAt,
+        placeIds,
       } = req.body;
 
       const existingCase = await prisma.moderationCase.findFirst({
@@ -161,6 +162,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (banDuration !== undefined) updateData.banDuration = banDuration;
       if (isPermanent !== undefined) updateData.isPermanent = isPermanent;
       if (expiresAt !== undefined) updateData.expiresAt = expiresAt ? new Date(expiresAt) : null;
+      if (placeIds !== undefined) {
+        updateData.placeIds = Array.isArray(placeIds)
+          ? placeIds
+              .map((id: any) => { try { return BigInt(id); } catch { return null; } })
+              .filter((id: bigint | null): id is bigint => id !== null)
+          : [];
+      }
       if (status === "resolved" && existingCase.status !== "resolved") {
         updateData.resolvedAt = resolvedAt || new Date();
         updateData.resolvedBy = req.session.userid!;
@@ -327,6 +335,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 export default async function (req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
+    return withPermissionCheck(handler, ["view_moderation"])(req, res);
+  }
+  if (req.method === "PUT") {
     return withPermissionCheck(handler, ["view_moderation"])(req, res);
   }
   if (req.method === "DELETE") {
