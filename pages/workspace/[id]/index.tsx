@@ -617,8 +617,7 @@ const Home: pageWithLayout = () => {
               </div>
             </div>
             {!isEditing &&
-              !loading &&
-              workspace.settings.widgets.length > 0 && (
+              !loading && (
                 <button
                   onClick={enterEditMode}
                   className={clsx(
